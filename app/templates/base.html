@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Class 11 and Class 12 Organic Chemistry concepts, videos, notes and resources.">
+  <title>{% block title %}{{ settings.site_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body data-live-page="true">
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">OC</span>
+      <span><strong>{{ settings.site_name }}</strong><small>Class 11 · Class 12</small></span>
+    </a>
+    <button class="nav-toggle" aria-label="Open menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
+    <nav>
+      <a href="/class/11">Class 11</a>
+      <a href="/class/12">Class 12</a>
+      <a href="/videos">Videos</a>
+      <a href="/resources">Resources</a>
+      <a href="/announcements">Updates</a>
+      <a href="/about">Teacher</a>
+    </nav>
+    <form class="header-search" action="/search" method="get">
+      <input type="search" name="q" placeholder="Search chemistry…" aria-label="Search chemistry">
+    </form>
+  </header>
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <footer>
+    <div><strong>{{ settings.site_name }}</strong><br><span>Organic chemistry that connects concepts to reactions.</span></div>
+    <div class="footer-links"><a href="/class/11">Class 11</a><a href="/class/12">Class 12</a><a href="/admin/login">Teacher login</a></div>
+  </footer>
+  <div id="live-indicator" class="live-indicator"><span></span> Live content</div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

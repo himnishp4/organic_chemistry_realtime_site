@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teacher Dashboard · {{ settings.site_name }}</title><link rel="stylesheet" href="/static/styles.css"></head>
+<body class="admin-body">
+<header class="admin-header"><a class="brand" href="/"><span class="brand-mark">OC</span><span><strong>{{ settings.site_name }}</strong><small>Teacher dashboard</small></span></a><div><a class="button secondary small" href="/" target="_blank">View public site ↗</a><a class="button ghost small" href="/admin/logout">Log out</a></div></header>
+<main class="admin-shell">
+  {% if request.query_params.get('status') %}<div class="success-banner">Saved. The public site has been notified of the update.</div>{% endif %}
+  <section class="admin-intro"><div><span class="eyebrow">CONTENT CONTROL</span><h1>Teach once. Update everywhere.</h1><p>Publish a change here and connected student pages receive a live update signal automatically.</p></div><div class="live-card"><span class="pulse"></span><strong>Live publishing enabled</strong><small>One database → every visitor</small></div></section>
+
+  <section class="admin-grid">
+    <div class="admin-panel create-panel"><div class="panel-title"><h2>Add new content</h2><span>Lesson · Video · Note · Update</span></div>
+      <form action="/admin/content/create" method="post" enctype="multipart/form-data" class="admin-form dense">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div class="form-row"><label>Class<select name="class_level"><option>11</option><option>12</option><option>All</option></select></label><label>Type<select name="content_type"><option value="concept">Concept</option><option value="video">Video</option><option value="note">Note</option><option value="resource">Resource</option><option value="announcement">Announcement</option></select></label></div>
+        <label>Chapter<input name="chapter" placeholder="e.g. General Organic Chemistry"></label>
+        <label>Title<input name="title" required placeholder="e.g. Resonance Effect"></label>
+        <label>Short summary<textarea name="summary" rows="2" placeholder="What will the student learn?"></textarea></label>
+        <label>Main content<textarea name="body" rows="8" placeholder="Write the explanation, steps, reactions, reminders…"></textarea></label>
+        <label>Video link (optional)<input name="video_url" type="url" placeholder="https://…"></label>
+        <label>Upload file/video (optional)<input name="upload" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.mp4,.webm,.mov,.doc,.docx,.ppt,.pptx"></label>
+        <div class="check-row"><label><input type="checkbox" name="published" checked> Publish now</label><label><input type="checkbox" name="featured"> Feature on home</label></div>
+        <button class="button primary full">Publish content</button>
+      </form>
+    </div>
+
+    <div class="admin-panel settings-panel"><div class="panel-title"><h2>Site & teacher details</h2><span>Change public branding anytime</span></div>
+      <form action="/admin/settings" method="post" class="admin-form dense">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Site name<input name="site_name" value="{{ settings.site_name }}" required></label>
+        <label>Teacher name<input name="teacher_name" value="{{ settings.teacher_name }}" required></label>
+        <label>Homepage headline<input name="hero_title" value="{{ settings.hero_title }}" required></label>
+        <label>Homepage description<textarea name="hero_subtitle" rows="3" required>{{ settings.hero_subtitle }}</textarea></label>
+        <label>Teacher bio<textarea name="teacher_bio" rows="5" required>{{ settings.teacher_bio }}</textarea></label>
+        <button class="button secondary full">Save site details</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="admin-panel library-panel"><div class="panel-title"><h2>Content library</h2><span>{{ items|length }} total items</span></div>
+    <div class="admin-library">
+    {% for item in items %}
+      <details class="edit-item">
+        <summary><div><span class="status-dot {% if item.published %}on{% endif %}"></span><strong>{{ item.title }}</strong><small>{{ item.content_type|capitalize }} · {{ item.class_level }} · {{ item.chapter }}</small></div><span>Edit ▾</span></summary>
+        <form action="/admin/content/{{ item.id }}/update" method="post" enctype="multipart/form-data" class="admin-form dense edit-form">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <div class="form-row"><label>Class<select name="class_level"><option {% if item.class_level=='11' %}selected{% endif %}>11</option><option {% if item.class_level=='12' %}selected{% endif %}>12</option><option {% if item.class_level=='All' %}selected{% endif %}>All</option></select></label><label>Type<select name="content_type">{% for kind in ['concept','video','note','resource','announcement'] %}<option value="{{ kind }}" {% if item.content_type==kind %}selected{% endif %}>{{ kind|capitalize }}</option>{% endfor %}</select></label></div>
+          <label>Chapter<input name="chapter" value="{{ item.chapter }}"></label><label>Title<input name="title" value="{{ item.title }}" required></label>
+          <label>Short summary<textarea name="summary" rows="2">{{ item.summary }}</textarea></label><label>Main content<textarea name="body" rows="7">{{ item.body }}</textarea></label>
+          <label>Video link<input name="video_url" type="url" value="{{ item.video_url }}"></label><label>Replace upload<input name="upload" type="file"></label>
+          {% if item.upload_path %}<small class="muted">Current attachment: {{ item.upload_path }}</small>{% endif %}
+          <div class="check-row"><label><input type="checkbox" name="published" {% if item.published %}checked{% endif %}> Published</label><label><input type="checkbox" name="featured" {% if item.featured %}checked{% endif %}> Featured</label></div>
+          <button class="button primary">Save changes</button>
+        </form>
+        <form action="/admin/content/{{ item.id }}/delete" method="post" onsubmit="return confirm('Delete this content permanently?')" class="delete-form"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Delete content</button></form>
+      </details>
+    {% endfor %}
+    </div>
+  </section>
+</main>
+</body></html>

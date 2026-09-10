@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Teacher · {{ settings.site_name }}{% endblock %}
+{% block content %}
+<section class="page-hero shell compact"><span class="eyebrow">YOUR TEACHER</span><h1>{{ settings.teacher_name }}</h1><p>{{ settings.teacher_bio }}</p></section>
+<section class="shell teacher-panel">
+  <div class="teacher-monogram">OC</div>
+  <div><h2>A teaching space designed to stay current.</h2><p>Lessons, notes, videos and announcements on this site are controlled from the teacher dashboard. When the teacher publishes a change, the public site receives the newest content automatically.</p><div class="trust-row"><span>Class 11</span><span>Class 12</span><span>Live updates</span></div></div>
+</section>
+{% endblock %}

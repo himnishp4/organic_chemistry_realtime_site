@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero shell">
+  <div class="hero-copy">
+    <div class="eyebrow">ORGANIC CHEMISTRY · XI & XII</div>
+    <h1>{{ settings.hero_title }}</h1>
+    <p>{{ settings.hero_subtitle }}</p>
+    <div class="hero-actions">
+      <a class="button primary" href="/class/11">Start Class 11</a>
+      <a class="button secondary" href="/class/12">Explore Class 12</a>
+    </div>
+    <div class="trust-row"><span>Concept-first</span><span>Teacher curated</span><span>Live updates</span></div>
+  </div>
+  <div class="molecule-card" aria-hidden="true">
+    <div class="mol-title">Reaction thinking</div>
+    <div class="reaction-line"><span>Nu:</span><b>→</b><span>C<sup>δ+</sup></span><b>→</b><span>Product</span></div>
+    <div class="orbital orbital-1"></div><div class="orbital orbital-2"></div><div class="orbital orbital-3"></div>
+    <div class="atom atom-a">C</div><div class="atom atom-b">O</div><div class="atom atom-c">H</div>
+    <p>Follow electrons. Predict outcomes. Remember less.</p>
+  </div>
+</section>
+
+<section class="stats shell">
+  <div><strong>11</strong><span>Foundation-first learning</span></div>
+  <div><strong>12</strong><span>Mechanisms & conversions</span></div>
+  <div><strong>LIVE</strong><span>Teacher changes appear instantly</span></div>
+</section>
+
+{% if announcements %}
+<section class="shell section-block">
+  <div class="section-head"><div><span class="eyebrow">FROM YOUR TEACHER</span><h2>Latest updates</h2></div><a href="/announcements">View all →</a></div>
+  <div class="announcement-grid">
+    {% for item in announcements %}
+    <a class="announcement" href="/lesson/{{ item.slug }}"><span class="dot"></span><div><strong>{{ item.title }}</strong><p>{{ item.summary }}</p></div></a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="shell section-block">
+  <div class="section-head"><div><span class="eyebrow">CURATED PATH</span><h2>Learn what matters next</h2></div><p>Clear explanations organized exactly where students expect them.</p></div>
+  <div class="content-grid">
+    {% for item in featured %}
+    <a class="content-card" href="/lesson/{{ item.slug }}">
+      <div class="card-meta"><span>Class {{ item.class_level }}</span><span>{{ item.content_type|capitalize }}</span></div>
+      <h3>{{ item.title }}</h3>
+      <p>{{ item.summary }}</p>
+      <div class="card-foot"><span>{{ item.chapter }}</span><b>Open lesson →</b></div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="shell split-banner">
+  <div><span class="eyebrow">STUDY SMARTER</span><h2>Concepts. Mechanisms. Practice. One calm workspace.</h2><p>Use chapter pages for structured study, videos for difficult mechanisms, and resources for revision.</p></div>
+  <div class="mini-nav"><a href="/videos"><span>▶</span><div><strong>Video library</strong><small>Teacher explanations</small></div></a><a href="/resources"><span>⌁</span><div><strong>Notes & resources</strong><small>PDFs and revision material</small></div></a></div>
+</section>
+{% endblock %}

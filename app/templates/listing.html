@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ settings.site_name }}{% endblock %}
+{% block content %}
+<section class="page-hero shell compact">
+  <span class="eyebrow">ORGANIC CHEMISTRY LIBRARY</span>
+  <h1>{{ title }}</h1><p>{{ subtitle }}</p>
+  {% if title == 'Search' %}
+  <form class="big-search" action="/search"><input name="q" placeholder="Try ‘SN1’, ‘nomenclature’, ‘carbonyl’…" autofocus><button>Search</button></form>
+  {% endif %}
+</section>
+<section class="shell section-block">
+  {% if items %}
+  <div class="content-grid">
+    {% for item in items %}
+    <a class="content-card" href="/lesson/{{ item.slug }}">
+      <div class="card-meta"><span>{% if item.class_level == 'All' %}All students{% else %}Class {{ item.class_level }}{% endif %}</span><span>{{ item.content_type|capitalize }}</span></div>
+      <h3>{{ item.title }}</h3><p>{{ item.summary }}</p>
+      <div class="card-foot"><span>{{ item.chapter }}</span><b>Open →</b></div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><h2>Nothing here yet.</h2><p>The teacher can publish new content from the dashboard.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

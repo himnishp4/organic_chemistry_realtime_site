@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Class {{ level }} · {{ settings.site_name }}{% endblock %}
+{% block content %}
+<section class="page-hero shell compact">
+  <span class="eyebrow">CLASS {{ level }} ORGANIC CHEMISTRY</span>
+  <h1>{% if level == '11' %}Build the foundation.{% else %}Connect reactions into a system.{% endif %}</h1>
+  <p>{% if level == '11' %}Master nomenclature, electronic effects, isomerism and hydrocarbons before moving into deeper mechanisms.{% else %}Study functional groups, mechanisms, named reactions and conversion logic with a clean chapter-wise path.{% endif %}</p>
+</section>
+<section class="shell section-block chapter-stack">
+  {% if chapters %}
+    {% for chapter, items in chapters.items() %}
+    <section class="chapter-block">
+      <div class="chapter-title"><span>{{ "%02d"|format(loop.index) }}</span><div><h2>{{ chapter }}</h2><p>{{ items|length }} item{% if items|length != 1 %}s{% endif %}</p></div></div>
+      <div class="lesson-list">
+      {% for item in items %}
+        <a href="/lesson/{{ item.slug }}" class="lesson-row">
+          <span class="type-icon">{% if item.content_type == 'video' %}▶{% elif item.content_type in ['note','resource'] %}⌁{% else %}↗{% endif %}</span>
+          <div><strong>{{ item.title }}</strong><p>{{ item.summary }}</p></div>
+          <span class="lesson-type">{{ item.content_type }}</span><b>→</b>
+        </a>
+      {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state"><h2>No published lessons yet.</h2><p>Your teacher can add content from the admin dashboard.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

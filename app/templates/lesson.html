@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} · {{ settings.site_name }}{% endblock %}
+{% block content %}
+<article class="lesson shell">
+  <div class="lesson-breadcrumb"><a href="/">Home</a><span>/</span>{% if item.class_level in ['11','12'] %}<a href="/class/{{ item.class_level }}">Class {{ item.class_level }}</a><span>/</span>{% endif %}<span>{{ item.chapter }}</span></div>
+  <header class="lesson-header">
+    <div class="card-meta"><span>{% if item.class_level == 'All' %}All students{% else %}Class {{ item.class_level }}{% endif %}</span><span>{{ item.content_type|capitalize }}</span></div>
+    <h1>{{ item.title }}</h1><p>{{ item.summary }}</p>
+  </header>
+
+  {% if item.upload_path and item.upload_path.lower().endswith(('.mp4','.webm','.mov')) %}
+  <div class="video-shell"><video controls preload="metadata" src="{{ item.upload_path }}"></video></div>
+  {% elif item.video_url %}
+  <div class="external-video"><a class="button primary" href="{{ item.video_url }}" target="_blank" rel="noopener">Open teacher video ↗</a><p>Video opens in a new tab.</p></div>
+  {% endif %}
+
+  <div class="lesson-layout">
+    <div class="lesson-body">{{ item.body|nl2br|safe }}</div>
+    <aside>
+      <div class="aside-card"><span class="eyebrow">CHAPTER</span><strong>{{ item.chapter }}</strong></div>
+      {% if item.upload_path and not item.upload_path.lower().endswith(('.mp4','.webm','.mov')) %}
+      <div class="aside-card"><span class="eyebrow">RESOURCE</span><a class="button secondary small" href="{{ item.upload_path }}" target="_blank">Open attachment</a></div>
+      {% endif %}
+      <div class="aside-card"><span class="eyebrow">UPDATED</span><strong>{{ item.updated_at[:10] }}</strong><small>Teacher-managed content</small></div>
+    </aside>
+  </div>
+</article>
+{% endblock %}
