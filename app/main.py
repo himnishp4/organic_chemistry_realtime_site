@@ -8,18 +8,35 @@ import json
 import os
 import re
 import secrets
-import shutil
-import sqlite3
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote, unquote
 
+import httpx
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import (
+    Column,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    Text,
+    and_,
+    create_engine,
+    delete,
+    func,
+    insert,
+    or_,
+    select,
+    update,
+)
+from sqlalchemy.engine import Connection, Engine
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -32,26 +49,69 @@ ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "teacher")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "chemistry123")
 SECRET_KEY = os.getenv("SITE_SECRET_KEY", "dev-secret-change-me")
 COOKIE_NAME = "orgchem_admin"
+IS_RENDER = os.getenv("RENDER", "").lower() in {"1", "true", "yes"}
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true" if IS_RENDER else "false").lower() in {"1", "true", "yes"}
+
+# Render should receive the Supabase Session Pooler URI in DATABASE_URL.
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH.as_posix()}")
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "")
+SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "course-media")
+USE_CLOUD_STORAGE = bool(SUPABASE_URL and SUPABASE_SECRET_KEY)
 
 ALLOWED_EXTENSIONS = {
     ".pdf", ".png", ".jpg", ".jpeg", ".webp",
     ".mp4", ".webm", ".mov", ".doc", ".docx", ".ppt", ".pptx"
 }
-MAX_UPLOAD_BYTES = 500 * 1024 * 1024
+LOCAL_MAX_UPLOAD_BYTES = 500 * 1024 * 1024
+# Supabase Free projects currently cap an individual file at 50 MB.
+CLOUD_MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 content_version = 1
 version_condition = asyncio.Condition()
 
+metadata = MetaData()
+content_table = Table(
+    "content",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("class_level", String(10), nullable=False, default="11"),
+    Column("chapter", Text, nullable=False, default=""),
+    Column("title", Text, nullable=False),
+    Column("slug", String(255), nullable=False, unique=True),
+    Column("content_type", String(30), nullable=False, default="concept"),
+    Column("summary", Text, nullable=False, default=""),
+    Column("body", Text, nullable=False, default=""),
+    Column("video_url", Text, nullable=False, default=""),
+    Column("upload_path", Text, nullable=False, default=""),
+    Column("published", Integer, nullable=False, default=1),
+    Column("featured", Integer, nullable=False, default=0),
+    Column("created_at", String(64), nullable=False),
+    Column("updated_at", String(64), nullable=False),
+)
+settings_table = Table(
+    "settings",
+    metadata,
+    Column("key", String(100), primary_key=True),
+    Column("value", Text, nullable=False),
+)
+
+
+def _build_engine() -> Engine:
+    kwargs = {"pool_pre_ping": True}
+    if DATABASE_URL.startswith("sqlite:"):
+        kwargs["connect_args"] = {"check_same_thread": False}
+    return create_engine(DATABASE_URL, **kwargs)
+
+
+engine = _build_engine()
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-def db() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
 
 
 def slugify(value: str) -> str:
@@ -60,49 +120,22 @@ def slugify(value: str) -> str:
     return value.strip("-") or "lesson"
 
 
-def unique_slug(conn: sqlite3.Connection, title: str, exclude_id: Optional[int] = None) -> str:
+def unique_slug(conn: Connection, title: str, exclude_id: Optional[int] = None) -> str:
     base = slugify(title)
     candidate = base
     counter = 2
     while True:
-        if exclude_id:
-            row = conn.execute("SELECT id FROM content WHERE slug = ? AND id != ?", (candidate, exclude_id)).fetchone()
-        else:
-            row = conn.execute("SELECT id FROM content WHERE slug = ?", (candidate,)).fetchone()
-        if not row:
+        stmt = select(content_table.c.id).where(content_table.c.slug == candidate)
+        if exclude_id is not None:
+            stmt = stmt.where(content_table.c.id != exclude_id)
+        if conn.execute(stmt).first() is None:
             return candidate
         candidate = f"{base}-{counter}"
         counter += 1
 
 
 def init_db() -> None:
-    conn = db()
-    conn.executescript(
-        """
-        CREATE TABLE IF NOT EXISTS content (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            class_level TEXT NOT NULL DEFAULT '11',
-            chapter TEXT NOT NULL DEFAULT '',
-            title TEXT NOT NULL,
-            slug TEXT NOT NULL UNIQUE,
-            content_type TEXT NOT NULL DEFAULT 'concept',
-            summary TEXT NOT NULL DEFAULT '',
-            body TEXT NOT NULL DEFAULT '',
-            video_url TEXT NOT NULL DEFAULT '',
-            upload_path TEXT NOT NULL DEFAULT '',
-            published INTEGER NOT NULL DEFAULT 1,
-            featured INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL
-        );
-        """
-    )
-
+    metadata.create_all(engine)
     defaults = {
         "site_name": "Organic Chemistry Academy",
         "teacher_name": "Your Chemistry Teacher",
@@ -110,37 +143,49 @@ def init_db() -> None:
         "hero_subtitle": "A focused Class 11 & 12 learning space for concepts, mechanisms, reactions, notes and teacher-led video lessons.",
         "teacher_bio": "Clear explanations, exam-focused practice and strong conceptual foundations for Class 11 and Class 12 Organic Chemistry.",
     }
-    for key, value in defaults.items():
-        conn.execute("INSERT OR IGNORE INTO settings(key, value) VALUES(?, ?)", (key, value))
+    with engine.begin() as conn:
+        for key, value in defaults.items():
+            exists = conn.execute(select(settings_table.c.key).where(settings_table.c.key == key)).first()
+            if exists is None:
+                conn.execute(insert(settings_table).values(key=key, value=value))
 
-    count = conn.execute("SELECT COUNT(*) FROM content").fetchone()[0]
-    if count == 0:
-        now = utc_now()
-        samples = [
-            ("11", "General Organic Chemistry", "General Organic Chemistry (GOC)", "concept", "Build the foundation: electronic effects, acidity/basicity and reactive intermediates.", "Organic chemistry becomes easier once you learn how electrons move. Start with inductive effect, resonance, hyperconjugation and the stability of carbocations, carbanions and free radicals.\n\nKey idea: most reaction mechanisms can be understood by identifying an electron-rich site, an electron-poor site and the most stable intermediate or transition pathway.", 1),
-            ("11", "Nomenclature", "IUPAC Nomenclature", "concept", "A systematic method to name organic compounds confidently.", "1. Select the longest parent chain containing the principal functional group.\n2. Number it to give the principal functional group the lowest locant.\n3. Name and alphabetize substituents.\n4. Add unsaturation and the functional-group suffix.\n\nPractice by naming structures from simple alkanes to multifunctional compounds.", 1),
-            ("11", "Isomerism", "Structural & Stereoisomerism", "concept", "Understand how the same molecular formula can create different molecules.", "Structural isomerism changes connectivity; stereoisomerism changes three-dimensional arrangement. Focus on chain, position, functional, geometrical and optical isomerism, and always connect the definition to a structure.", 0),
-            ("11", "Hydrocarbons", "Hydrocarbons: Alkanes, Alkenes & Alkynes", "concept", "Reaction patterns of the most important hydrocarbon families.", "Compare substitution in alkanes with electrophilic addition in alkenes and alkynes. Learn Markovnikov orientation, peroxide effect where applicable, oxidation and common preparation methods.", 0),
-            ("12", "Haloalkanes & Haloarenes", "SN1 vs SN2 Reactions", "concept", "Predict substitution mechanisms using substrate, nucleophile and solvent.", "SN1 proceeds through a carbocation and is favored by substrates that stabilize positive charge. SN2 is a one-step backside attack and is favored by less hindered substrates.\n\nWhen solving a question, check substrate structure first, then nucleophile strength, solvent and leaving group.", 1),
-            ("12", "Alcohols, Phenols & Ethers", "Alcohols, Phenols & Ethers", "concept", "Acidity, preparation and high-yield reaction pathways.", "Focus on acidity of phenols, reactions of alcohols, dehydration, oxidation, Williamson ether synthesis and important distinctions used in board and entrance questions.", 0),
-            ("12", "Aldehydes, Ketones & Carboxylic Acids", "Carbonyl Chemistry", "concept", "Master nucleophilic addition and the characteristic reactions of carbonyl compounds.", "The carbonyl carbon is electrophilic because oxygen withdraws electron density. Use this fact to understand nucleophilic addition, oxidation/reduction and common named transformations instead of memorizing isolated equations.", 1),
-            ("12", "Amines", "Amines and Diazonium Salts", "concept", "Basicity trends, preparations and diazonium chemistry.", "Compare basicity using electron availability on nitrogen, resonance and solvation. Diazonium salts are especially useful because they connect aromatic amines to many substitution products and azo dyes.", 0),
-            ("All", "Updates", "Welcome to the learning portal", "announcement", "Your teacher can publish class updates here instantly.", "This portal is designed so new lessons, notes, announcements and videos become visible to students as soon as the teacher publishes them.", 1),
-        ]
-        for level, chapter, title, kind, summary, body, featured in samples:
-            conn.execute(
-                """INSERT INTO content(class_level, chapter, title, slug, content_type, summary, body, published, featured, created_at, updated_at)
-                   VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
-                (level, chapter, title, unique_slug(conn, title), kind, summary, body, 1, featured, now, now),
-            )
-    conn.commit()
-    conn.close()
+        count = conn.execute(select(func.count()).select_from(content_table)).scalar_one()
+        if count == 0:
+            now = utc_now()
+            samples = [
+                ("11", "General Organic Chemistry", "General Organic Chemistry (GOC)", "concept", "Build the foundation: electronic effects, acidity/basicity and reactive intermediates.", "Organic chemistry becomes easier once you learn how electrons move. Start with inductive effect, resonance, hyperconjugation and the stability of carbocations, carbanions and free radicals.\n\nKey idea: most reaction mechanisms can be understood by identifying an electron-rich site, an electron-poor site and the most stable intermediate or transition pathway.", 1),
+                ("11", "Nomenclature", "IUPAC Nomenclature", "concept", "A systematic method to name organic compounds confidently.", "1. Select the longest parent chain containing the principal functional group.\n2. Number it to give the principal functional group the lowest locant.\n3. Name and alphabetize substituents.\n4. Add unsaturation and the functional-group suffix.\n\nPractice by naming structures from simple alkanes to multifunctional compounds.", 1),
+                ("11", "Isomerism", "Structural & Stereoisomerism", "concept", "Understand how the same molecular formula can create different molecules.", "Structural isomerism changes connectivity; stereoisomerism changes three-dimensional arrangement. Focus on chain, position, functional, geometrical and optical isomerism, and always connect the definition to a structure.", 0),
+                ("11", "Hydrocarbons", "Hydrocarbons: Alkanes, Alkenes & Alkynes", "concept", "Reaction patterns of the most important hydrocarbon families.", "Compare substitution in alkanes with electrophilic addition in alkenes and alkynes. Learn Markovnikov orientation, peroxide effect where applicable, oxidation and common preparation methods.", 0),
+                ("12", "Haloalkanes & Haloarenes", "SN1 vs SN2 Reactions", "concept", "Predict substitution mechanisms using substrate, nucleophile and solvent.", "SN1 proceeds through a carbocation and is favored by substrates that stabilize positive charge. SN2 is a one-step backside attack and is favored by less hindered substrates.\n\nWhen solving a question, check substrate structure first, then nucleophile strength, solvent and leaving group.", 1),
+                ("12", "Alcohols, Phenols & Ethers", "Alcohols, Phenols & Ethers", "concept", "Acidity, preparation and high-yield reaction pathways.", "Focus on acidity of phenols, reactions of alcohols, dehydration, oxidation, Williamson ether synthesis and important distinctions used in board and entrance questions.", 0),
+                ("12", "Aldehydes, Ketones & Carboxylic Acids", "Carbonyl Chemistry", "concept", "Master nucleophilic addition and the characteristic reactions of carbonyl compounds.", "The carbonyl carbon is electrophilic because oxygen withdraws electron density. Use this fact to understand nucleophilic addition, oxidation/reduction and common named transformations instead of memorizing isolated equations.", 1),
+                ("12", "Amines", "Amines and Diazonium Salts", "concept", "Basicity trends, preparations and diazonium chemistry.", "Compare basicity using electron availability on nitrogen, resonance and solvation. Diazonium salts are especially useful because they connect aromatic amines to many substitution products and azo dyes.", 0),
+                ("All", "Updates", "Welcome to the learning portal", "announcement", "Your teacher can publish class updates here instantly.", "This portal is designed so new lessons, notes, announcements and videos become visible to students as soon as the teacher publishes them.", 1),
+            ]
+            for level, chapter, title, kind, summary, body, featured in samples:
+                conn.execute(
+                    insert(content_table).values(
+                        class_level=level,
+                        chapter=chapter,
+                        title=title,
+                        slug=unique_slug(conn, title),
+                        content_type=kind,
+                        summary=summary,
+                        body=body,
+                        video_url="",
+                        upload_path="",
+                        published=1,
+                        featured=featured,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                )
 
 
 def get_settings() -> dict[str, str]:
-    conn = db()
-    rows = conn.execute("SELECT key, value FROM settings").fetchall()
-    conn.close()
+    with engine.connect() as conn:
+        rows = conn.execute(select(settings_table.c.key, settings_table.c.value)).mappings().all()
     return {row["key"]: row["value"] for row in rows}
 
 
@@ -185,21 +230,74 @@ async def broadcast_update() -> None:
         version_condition.notify_all()
 
 
+def _storage_object_from_public_url(url: str) -> Optional[str]:
+    if not (USE_CLOUD_STORAGE and url):
+        return None
+    prefix = f"{SUPABASE_URL}/storage/v1/object/public/{quote(SUPABASE_STORAGE_BUCKET, safe='')}/"
+    if not url.startswith(prefix):
+        return None
+    return unquote(url[len(prefix):])
+
+
+async def _delete_cloud_upload(public_url: str) -> None:
+    object_path = _storage_object_from_public_url(public_url)
+    if not object_path:
+        return
+    endpoint = f"{SUPABASE_URL}/storage/v1/object/{quote(SUPABASE_STORAGE_BUCKET, safe='')}"
+    headers = {"apikey": SUPABASE_SECRET_KEY, "Content-Type": "application/json"}
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            await client.request("DELETE", endpoint, headers=headers, json={"prefixes": [object_path]})
+    except Exception:
+        # Content deletion should still succeed even if remote cleanup has a transient failure.
+        pass
+
+
 async def save_upload(upload: Optional[UploadFile]) -> str:
     if not upload or not upload.filename:
         return ""
     suffix = Path(upload.filename).suffix.lower()
     if suffix not in ALLOWED_EXTENSIONS:
+        await upload.close()
         raise HTTPException(status_code=400, detail=f"File type {suffix or 'unknown'} is not allowed")
+
     safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "-", Path(upload.filename).stem).strip("-")[:70] or "file"
     filename = f"{int(time.time())}-{secrets.token_hex(4)}-{safe_stem}{suffix}"
+
+    if USE_CLOUD_STORAGE:
+        payload = await upload.read(CLOUD_MAX_UPLOAD_BYTES + 1)
+        content_type = upload.content_type or "application/octet-stream"
+        await upload.close()
+        if len(payload) > CLOUD_MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="On the free cloud storage plan, each uploaded file must be 50 MB or smaller. For larger videos, use the Video link field.")
+        object_path = f"teacher-uploads/{filename}"
+        endpoint = f"{SUPABASE_URL}/storage/v1/object/{quote(SUPABASE_STORAGE_BUCKET, safe='')}/{quote(object_path, safe='/')}"
+        headers = {
+            "apikey": SUPABASE_SECRET_KEY,
+            "Content-Type": content_type,
+            "cache-control": "3600",
+            "x-upsert": "false",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=120) as client:
+                response = await client.post(endpoint, content=payload, headers=headers)
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail="Could not reach Supabase Storage. Try the upload again.") from exc
+        if response.status_code not in {200, 201}:
+            raise HTTPException(status_code=502, detail="Supabase Storage rejected the upload. Confirm that the 'course-media' bucket exists, is public, and your SUPABASE_SECRET_KEY is correct.")
+        return f"{SUPABASE_URL}/storage/v1/object/public/{quote(SUPABASE_STORAGE_BUCKET, safe='')}/{quote(object_path, safe='/')}"
+
+    if IS_RENDER:
+        await upload.close()
+        raise HTTPException(status_code=503, detail="Persistent file storage is not configured. Add SUPABASE_URL and SUPABASE_SECRET_KEY on Render before using direct uploads.")
+
     path = UPLOAD_DIR / filename
     total = 0
     try:
         with path.open("wb") as f:
             while chunk := await upload.read(1024 * 1024):
                 total += len(chunk)
-                if total > MAX_UPLOAD_BYTES:
+                if total > LOCAL_MAX_UPLOAD_BYTES:
                     raise HTTPException(status_code=413, detail="Upload is larger than 500 MB")
                 f.write(chunk)
     except Exception:
@@ -208,6 +306,15 @@ async def save_upload(upload: Optional[UploadFile]) -> str:
     finally:
         await upload.close()
     return f"/static/uploads/{filename}"
+
+
+async def delete_upload(upload_path: str) -> None:
+    if not upload_path:
+        return
+    if upload_path.startswith("/static/uploads/"):
+        (UPLOAD_DIR / Path(upload_path).name).unlink(missing_ok=True)
+    else:
+        await _delete_cloud_upload(upload_path)
 
 
 @asynccontextmanager
@@ -220,23 +327,30 @@ app = FastAPI(title="Organic Chemistry Academy", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
+
 def nl2br(text: str) -> str:
     import html
     return html.escape(text).replace("\n", "<br>")
+
 
 templates.env.filters["nl2br"] = nl2br
 
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    conn = db()
-    featured = conn.execute(
-        "SELECT * FROM content WHERE published=1 AND content_type!='announcement' ORDER BY featured DESC, updated_at DESC LIMIT 6"
-    ).fetchall()
-    announcements = conn.execute(
-        "SELECT * FROM content WHERE published=1 AND content_type='announcement' ORDER BY updated_at DESC LIMIT 3"
-    ).fetchall()
-    conn.close()
+    with engine.connect() as conn:
+        featured = conn.execute(
+            select(content_table)
+            .where(and_(content_table.c.published == 1, content_table.c.content_type != "announcement"))
+            .order_by(content_table.c.featured.desc(), content_table.c.updated_at.desc())
+            .limit(6)
+        ).mappings().all()
+        announcements = conn.execute(
+            select(content_table)
+            .where(and_(content_table.c.published == 1, content_table.c.content_type == "announcement"))
+            .order_by(content_table.c.updated_at.desc())
+            .limit(3)
+        ).mappings().all()
     return templates.TemplateResponse("home.html", {"request": request, "settings": get_settings(), "featured": featured, "announcements": announcements})
 
 
@@ -244,12 +358,12 @@ def home(request: Request):
 def class_page(request: Request, level: str):
     if level not in {"11", "12"}:
         raise HTTPException(status_code=404)
-    conn = db()
-    items = conn.execute(
-        "SELECT * FROM content WHERE published=1 AND class_level=? AND content_type!='announcement' ORDER BY chapter COLLATE NOCASE, updated_at DESC",
-        (level,),
-    ).fetchall()
-    conn.close()
+    with engine.connect() as conn:
+        items = conn.execute(
+            select(content_table)
+            .where(and_(content_table.c.published == 1, content_table.c.class_level == level, content_table.c.content_type != "announcement"))
+            .order_by(func.lower(content_table.c.chapter), content_table.c.updated_at.desc())
+        ).mappings().all()
     chapters: dict[str, list] = {}
     for item in items:
         chapters.setdefault(item["chapter"] or "Other", []).append(item)
@@ -258,9 +372,10 @@ def class_page(request: Request, level: str):
 
 @app.get("/lesson/{slug}", response_class=HTMLResponse)
 def lesson(request: Request, slug: str):
-    conn = db()
-    item = conn.execute("SELECT * FROM content WHERE slug=? AND published=1", (slug,)).fetchone()
-    conn.close()
+    with engine.connect() as conn:
+        item = conn.execute(
+            select(content_table).where(and_(content_table.c.slug == slug, content_table.c.published == 1))
+        ).mappings().first()
     if not item:
         raise HTTPException(status_code=404)
     return templates.TemplateResponse("lesson.html", {"request": request, "settings": get_settings(), "item": item})
@@ -268,25 +383,34 @@ def lesson(request: Request, slug: str):
 
 @app.get("/videos", response_class=HTMLResponse)
 def videos(request: Request):
-    conn = db()
-    items = conn.execute("SELECT * FROM content WHERE published=1 AND content_type='video' ORDER BY updated_at DESC").fetchall()
-    conn.close()
+    with engine.connect() as conn:
+        items = conn.execute(
+            select(content_table)
+            .where(and_(content_table.c.published == 1, content_table.c.content_type == "video"))
+            .order_by(content_table.c.updated_at.desc())
+        ).mappings().all()
     return templates.TemplateResponse("listing.html", {"request": request, "settings": get_settings(), "title": "Video Library", "subtitle": "Teacher-led lessons and reaction walkthroughs.", "items": items})
 
 
 @app.get("/resources", response_class=HTMLResponse)
 def resources(request: Request):
-    conn = db()
-    items = conn.execute("SELECT * FROM content WHERE published=1 AND content_type IN ('note','resource') ORDER BY updated_at DESC").fetchall()
-    conn.close()
+    with engine.connect() as conn:
+        items = conn.execute(
+            select(content_table)
+            .where(and_(content_table.c.published == 1, content_table.c.content_type.in_(["note", "resource"])))
+            .order_by(content_table.c.updated_at.desc())
+        ).mappings().all()
     return templates.TemplateResponse("listing.html", {"request": request, "settings": get_settings(), "title": "Notes & Resources", "subtitle": "Revision notes, PDFs, worksheets and exam-focused material.", "items": items})
 
 
 @app.get("/announcements", response_class=HTMLResponse)
 def announcements(request: Request):
-    conn = db()
-    items = conn.execute("SELECT * FROM content WHERE published=1 AND content_type='announcement' ORDER BY updated_at DESC").fetchall()
-    conn.close()
+    with engine.connect() as conn:
+        items = conn.execute(
+            select(content_table)
+            .where(and_(content_table.c.published == 1, content_table.c.content_type == "announcement"))
+            .order_by(content_table.c.updated_at.desc())
+        ).mappings().all()
     return templates.TemplateResponse("listing.html", {"request": request, "settings": get_settings(), "title": "Announcements", "subtitle": "The latest updates from your teacher.", "items": items})
 
 
@@ -300,15 +424,25 @@ def search(request: Request, q: str = ""):
     q = q.strip()
     items = []
     if q:
-        conn = db()
-        like = f"%{q}%"
-        items = conn.execute(
-            """SELECT * FROM content WHERE published=1 AND content_type!='announcement'
-               AND (title LIKE ? OR chapter LIKE ? OR summary LIKE ? OR body LIKE ?)
-               ORDER BY updated_at DESC LIMIT 50""",
-            (like, like, like, like),
-        ).fetchall()
-        conn.close()
+        pattern = f"%{q}%"
+        with engine.connect() as conn:
+            items = conn.execute(
+                select(content_table)
+                .where(
+                    and_(
+                        content_table.c.published == 1,
+                        content_table.c.content_type != "announcement",
+                        or_(
+                            content_table.c.title.ilike(pattern),
+                            content_table.c.chapter.ilike(pattern),
+                            content_table.c.summary.ilike(pattern),
+                            content_table.c.body.ilike(pattern),
+                        ),
+                    )
+                )
+                .order_by(content_table.c.updated_at.desc())
+                .limit(50)
+            ).mappings().all()
     return templates.TemplateResponse("listing.html", {"request": request, "settings": get_settings(), "title": f"Search results for “{q}”" if q else "Search", "subtitle": "Search concepts, chapters, notes and lessons.", "items": items, "search_query": q})
 
 
@@ -346,7 +480,7 @@ def admin_login(request: Request, username: str = Form(...), password: str = For
     csrf = secrets.token_urlsafe(24)
     token = sign_session({"exp": int(time.time()) + 12 * 3600, "csrf": csrf})
     response = RedirectResponse("/admin", status_code=303)
-    response.set_cookie(COOKIE_NAME, token, httponly=True, secure=False, samesite="strict", max_age=12 * 3600)
+    response.set_cookie(COOKIE_NAME, token, httponly=True, secure=COOKIE_SECURE, samesite="strict", max_age=12 * 3600)
     return response
 
 
@@ -360,9 +494,8 @@ def admin_logout():
 @app.get("/admin", response_class=HTMLResponse)
 def admin_dashboard(request: Request):
     session = require_admin(request)
-    conn = db()
-    items = conn.execute("SELECT * FROM content ORDER BY updated_at DESC").fetchall()
-    conn.close()
+    with engine.connect() as conn:
+        items = conn.execute(select(content_table).order_by(content_table.c.updated_at.desc())).mappings().all()
     return templates.TemplateResponse("admin_dashboard.html", {"request": request, "settings": get_settings(), "items": items, "csrf": session["csrf"]})
 
 
@@ -388,15 +521,25 @@ async def create_content(
         content_type = "concept"
     upload_path = await save_upload(upload)
     now = utc_now()
-    conn = db()
-    slug = unique_slug(conn, title)
-    conn.execute(
-        """INSERT INTO content(class_level, chapter, title, slug, content_type, summary, body, video_url, upload_path, published, featured, created_at, updated_at)
-           VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (class_level, chapter.strip(), title.strip(), slug, content_type, summary.strip(), body.strip(), video_url.strip(), upload_path, 1 if published else 0, 1 if featured else 0, now, now),
-    )
-    conn.commit()
-    conn.close()
+    with engine.begin() as conn:
+        slug = unique_slug(conn, title)
+        conn.execute(
+            insert(content_table).values(
+                class_level=class_level,
+                chapter=chapter.strip(),
+                title=title.strip(),
+                slug=slug,
+                content_type=content_type,
+                summary=summary.strip(),
+                body=body.strip(),
+                video_url=video_url.strip(),
+                upload_path=upload_path,
+                published=1 if published else 0,
+                featured=1 if featured else 0,
+                created_at=now,
+                updated_at=now,
+            )
+        )
     await broadcast_update()
     return RedirectResponse("/admin?status=created", status_code=303)
 
@@ -418,25 +561,43 @@ async def update_content(
     upload: Optional[UploadFile] = File(None),
 ):
     require_admin(request, csrf)
-    conn = db()
-    existing = conn.execute("SELECT * FROM content WHERE id=?", (item_id,)).fetchone()
+    if class_level not in {"11", "12", "All"}:
+        class_level = "All"
+    if content_type not in {"concept", "video", "note", "resource", "announcement"}:
+        content_type = "concept"
+
+    with engine.connect() as conn:
+        existing = conn.execute(select(content_table).where(content_table.c.id == item_id)).mappings().first()
     if not existing:
-        conn.close()
         raise HTTPException(status_code=404)
-    upload_path = existing["upload_path"]
+
+    old_upload_path = existing["upload_path"] or ""
     new_upload = await save_upload(upload)
-    if new_upload:
-        old_path = upload_path
-        upload_path = new_upload
-        if old_path.startswith("/static/uploads/"):
-            (UPLOAD_DIR / Path(old_path).name).unlink(missing_ok=True)
-    slug = unique_slug(conn, title, exclude_id=item_id)
-    conn.execute(
-        """UPDATE content SET class_level=?, chapter=?, title=?, slug=?, content_type=?, summary=?, body=?, video_url=?, upload_path=?, published=?, featured=?, updated_at=? WHERE id=?""",
-        (class_level, chapter.strip(), title.strip(), slug, content_type, summary.strip(), body.strip(), video_url.strip(), upload_path, 1 if published else 0, 1 if featured else 0, utc_now(), item_id),
-    )
-    conn.commit()
-    conn.close()
+    upload_path = new_upload or old_upload_path
+
+    with engine.begin() as conn:
+        slug = unique_slug(conn, title, exclude_id=item_id)
+        conn.execute(
+            update(content_table)
+            .where(content_table.c.id == item_id)
+            .values(
+                class_level=class_level,
+                chapter=chapter.strip(),
+                title=title.strip(),
+                slug=slug,
+                content_type=content_type,
+                summary=summary.strip(),
+                body=body.strip(),
+                video_url=video_url.strip(),
+                upload_path=upload_path,
+                published=1 if published else 0,
+                featured=1 if featured else 0,
+                updated_at=utc_now(),
+            )
+        )
+
+    if new_upload and old_upload_path:
+        await delete_upload(old_upload_path)
     await broadcast_update()
     return RedirectResponse("/admin?status=updated", status_code=303)
 
@@ -444,14 +605,12 @@ async def update_content(
 @app.post("/admin/content/{item_id}/delete")
 async def delete_content(request: Request, item_id: int, csrf: str = Form(...)):
     require_admin(request, csrf)
-    conn = db()
-    existing = conn.execute("SELECT upload_path FROM content WHERE id=?", (item_id,)).fetchone()
-    if existing:
-        conn.execute("DELETE FROM content WHERE id=?", (item_id,))
-        conn.commit()
-        if existing["upload_path"].startswith("/static/uploads/"):
-            (UPLOAD_DIR / Path(existing["upload_path"]).name).unlink(missing_ok=True)
-    conn.close()
+    with engine.begin() as conn:
+        existing = conn.execute(select(content_table.c.upload_path).where(content_table.c.id == item_id)).mappings().first()
+        if existing:
+            conn.execute(delete(content_table).where(content_table.c.id == item_id))
+    if existing and existing["upload_path"]:
+        await delete_upload(existing["upload_path"])
     await broadcast_update()
     return RedirectResponse("/admin?status=deleted", status_code=303)
 
@@ -474,10 +633,12 @@ async def update_settings(
         "hero_subtitle": hero_subtitle.strip(),
         "teacher_bio": teacher_bio.strip(),
     }
-    conn = db()
-    for key, value in values.items():
-        conn.execute("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, value))
-    conn.commit()
-    conn.close()
+    with engine.begin() as conn:
+        for key, value in values.items():
+            exists = conn.execute(select(settings_table.c.key).where(settings_table.c.key == key)).first()
+            if exists:
+                conn.execute(update(settings_table).where(settings_table.c.key == key).values(value=value))
+            else:
+                conn.execute(insert(settings_table).values(key=key, value=value))
     await broadcast_update()
     return RedirectResponse("/admin?status=settings", status_code=303)
