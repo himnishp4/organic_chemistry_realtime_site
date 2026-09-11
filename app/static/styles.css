@@ -110,3 +110,101 @@ body[data-chem-motion="true"] main::before{
 }
 @media(max-width:640px){.chem-motion-canvas{opacity:.64}}
 @media(prefers-reduced-motion:reduce){.chem-motion-canvas{opacity:.45}}
+
+/* Premium atomic redesign -------------------------------------------------
+   Cool iridescent palette, interactive orbital hero and richer glass depth. */
+:root{
+  --ink:#0c1430;
+  --ink-2:#485675;
+  --paper:#eef3fb;
+  --white:#fff;
+  --line:#d6dfef;
+  --accent:#6257f6;
+  --accent-2:#e5e9ff;
+  --gold:#17a9b8;
+  --shadow:0 24px 70px rgba(39,54,104,.13);
+}
+body{
+  background:
+    radial-gradient(circle at 76% 9%,rgba(98,87,246,.11),transparent 30%),
+    radial-gradient(circle at 11% 42%,rgba(45,213,221,.09),transparent 32%),
+    linear-gradient(180deg,#f6f8fe 0%,#edf2fb 52%,#f7f8fd 100%);
+}
+.ambient-a{background:#c8c5ff;opacity:.30}.ambient-b{background:#a8edf2;opacity:.25}
+.site-header{
+  border-color:rgba(84,102,153,.15);
+  background:rgba(249,251,255,.74);
+  box-shadow:0 14px 45px rgba(24,38,76,.08);
+  backdrop-filter:blur(22px) saturate(155%);
+}
+.brand-mark{
+  background:linear-gradient(145deg,#171c42,#6358f7 64%,#2bd5dd);
+  box-shadow:0 8px 24px rgba(84,74,235,.26),inset 0 1px 0 rgba(255,255,255,.28);
+}
+.eyebrow{color:#5d55ef}
+.premium-hero{position:relative;isolation:isolate}
+.premium-hero .hero-copy{position:relative;z-index:3}
+.premium-hero .hero-copy>p{color:#52617d}
+.premium-hero .trust-row span{background:rgba(255,255,255,.58);border-color:rgba(99,87,246,.12);backdrop-filter:blur(12px)}
+
+.premium-atom-card{
+  position:relative;
+  min-height:430px;
+  overflow:hidden;
+  isolation:isolate;
+  border:1px solid rgba(255,255,255,.13);
+  background:
+    radial-gradient(circle at 60% 44%,rgba(94,81,248,.18),transparent 31%),
+    radial-gradient(circle at 22% 80%,rgba(30,204,218,.13),transparent 34%),
+    linear-gradient(145deg,rgba(12,17,44,.98),rgba(17,24,57,.96) 54%,rgba(14,22,52,.98));
+  box-shadow:
+    0 42px 90px rgba(30,37,78,.26),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 0 60px rgba(112,93,255,.04);
+  border-radius:32px;
+  transform:translateZ(0);
+}
+.premium-atom-card::after{
+  content:"";position:absolute;inset:1px;border-radius:31px;pointer-events:none;z-index:10;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);
+}
+.atom-card-grid{
+  position:absolute;inset:0;z-index:-1;opacity:.16;
+  background-image:linear-gradient(rgba(152,169,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(152,169,255,.16) 1px,transparent 1px);
+  background-size:42px 42px;
+  mask-image:linear-gradient(to bottom,black,transparent 88%);
+}
+.atom-card-glow{position:absolute;border-radius:50%;filter:blur(42px);pointer-events:none;z-index:-1}.atom-card-glow-a{width:190px;height:190px;background:rgba(116,91,255,.25);right:-34px;top:-38px}.atom-card-glow-b{width:150px;height:150px;background:rgba(38,223,226,.18);left:-34px;bottom:-52px}
+.atom-kicker{position:absolute;top:24px;left:26px;display:flex;align-items:center;gap:8px;color:#b8c5f2;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.atom-kicker span{width:7px;height:7px;border-radius:50%;background:#43e2e5;box-shadow:0 0 0 5px rgba(67,226,229,.08),0 0 16px rgba(67,226,229,.85)}
+.atom-stage{position:absolute;left:50%;top:43%;width:260px;height:260px;transform:translate(-50%,-50%);filter:drop-shadow(0 18px 36px rgba(45,54,140,.20))}
+.atom-orbit{position:absolute;inset:50% auto auto 50%;width:260px;height:88px;margin:-44px 0 0 -130px;border:1px solid rgba(141,161,255,.34);border-radius:50%;box-shadow:0 0 30px rgba(89,82,245,.05),inset 0 0 20px rgba(49,218,225,.03)}
+.orbit-one{transform:rotate(-18deg);animation:orbit-breathe 6s ease-in-out infinite}.orbit-two{transform:rotate(54deg);animation:orbit-breathe 7.4s ease-in-out -1.2s infinite}.orbit-three{transform:rotate(90deg);animation:orbit-breathe 8.4s ease-in-out -2.5s infinite}
+.electron{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px;border-radius:50%;background:#fff;box-shadow:0 0 4px #fff,0 0 16px currentColor,0 0 34px currentColor}.electron::before{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid currentColor;opacity:.16}.electron-one{color:#40e1e6;animation:electron-orbit-1 4.2s linear infinite}.electron-two{color:#8e76ff;animation:electron-orbit-2 5.4s linear infinite}.electron-three{color:#5ea5ff;animation:electron-orbit-3 4.8s linear infinite}
+.premium-nucleus{position:absolute;left:50%;top:50%;width:72px;height:72px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 28% 24%,#fff 0 4%,#66edf0 10%,#7b66ff 36%,#24265f 75%,#131736 100%);box-shadow:0 0 0 9px rgba(110,92,255,.05),0 0 35px rgba(98,83,246,.72),0 0 78px rgba(42,214,223,.18),inset -12px -14px 24px rgba(3,7,29,.42),inset 8px 8px 16px rgba(255,255,255,.19);animation:nucleus-pulse 4.2s ease-in-out infinite}
+.nucleon{position:absolute;width:20px;height:20px;border-radius:50%;box-shadow:inset 2px 2px 4px rgba(255,255,255,.42),inset -3px -3px 6px rgba(5,8,39,.26),0 2px 8px rgba(0,0,0,.22)}.proton{background:linear-gradient(145deg,#ff85c7,#8a63ff)}.neutron{background:linear-gradient(145deg,#79f3f0,#4a8cff)}.p1{left:15px;top:14px}.n1{right:14px;top:16px}.p2{left:18px;bottom:12px}.n2{right:13px;bottom:15px}
+.atom-copy{position:absolute;left:28px;right:28px;bottom:24px;z-index:3}.atom-copy small{display:block;color:#7e91c5;font-size:9px;font-weight:900;letter-spacing:.18em;margin-bottom:4px}.atom-copy strong{display:block;color:#f6f8ff;font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:27px;letter-spacing:-.025em}.atom-copy p{color:#9caad0;max-width:390px;margin:6px 0 0;font-size:12px}.formula-chip{position:absolute;padding:7px 10px;border:1px solid rgba(255,255,255,.10);border-radius:999px;background:rgba(255,255,255,.055);color:#bbc7ed;font-size:9px;font-weight:800;letter-spacing:.06em;backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}.chip-a{right:22px;top:25px}.chip-b{right:21px;top:60px}.chip-c{right:21px;top:95px}
+
+@keyframes nucleus-pulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.055)}}
+@keyframes orbit-breathe{0%,100%{filter:brightness(.92)}50%{filter:brightness(1.25)}}
+@keyframes electron-orbit-1{from{transform:rotate(0deg) translateX(130px) rotate(0deg)}to{transform:rotate(360deg) translateX(130px) rotate(-360deg)}}
+@keyframes electron-orbit-2{from{transform:rotate(120deg) translateX(130px) rotate(-120deg)}to{transform:rotate(480deg) translateX(130px) rotate(-480deg)}}
+@keyframes electron-orbit-3{from{transform:rotate(240deg) translateX(130px) rotate(-240deg)}to{transform:rotate(600deg) translateX(130px) rotate(-600deg)}}
+
+/* Upgrade existing cards to a softer glass / luxury science feel. */
+.content-card,.announcement,.stats,.split-banner,.chapter-block,.lesson-card,.teacher-panel,.admin-panel,.login-card{
+  border-color:rgba(93,106,154,.14);
+  box-shadow:0 18px 55px rgba(39,56,107,.075);
+}
+.content-card,.announcement,.stats,.chapter-block,.lesson-card,.teacher-panel,.login-card{background:rgba(255,255,255,.74);backdrop-filter:blur(15px) saturate(135%)}
+.split-banner{background:linear-gradient(140deg,#12183a,#1a2251 56%,#172952);color:#f4f6ff;border-color:rgba(255,255,255,.08)}
+.split-banner p,.split-banner small{color:#aeb9da}.split-banner .eyebrow{color:#7fe3e8}
+
+.button.liquid.primary{background:linear-gradient(135deg,rgba(74,64,219,.95),rgba(91,84,246,.90) 54%,rgba(36,181,198,.86));box-shadow:0 14px 34px rgba(80,72,230,.25),inset 0 1px 0 rgba(255,255,255,.26)}
+.button.liquid.secondary{background:rgba(255,255,255,.68);border-color:rgba(130,143,194,.24);box-shadow:0 12px 30px rgba(45,60,115,.08),inset 0 1px 0 rgba(255,255,255,.8)}
+
+.chem-motion-canvas.premium-atomic-field{opacity:1;mix-blend-mode:normal;z-index:0}
+body[data-chem-motion="true"] main::before{background:linear-gradient(180deg,rgba(245,248,255,.15),rgba(239,244,252,.30))}
+body.atom-dragging{cursor:grabbing}
+@media(max-width:980px){.premium-atom-card{min-height:390px}.atom-stage{transform:translate(-50%,-50%) scale(.9)}}
+@media(max-width:640px){.premium-atom-card{min-height:350px;border-radius:26px}.atom-stage{top:41%;transform:translate(-50%,-50%) scale(.72)}.formula-chip{display:none}.atom-copy strong{font-size:23px}.atom-copy p{font-size:11px}.atom-kicker{left:20px;top:20px}.atom-copy{left:20px;right:20px;bottom:20px}}
+@media(prefers-reduced-motion:reduce){.premium-nucleus,.atom-orbit,.electron{animation:none!important}}

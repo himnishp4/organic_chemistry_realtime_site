@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero shell">
+<section class="hero shell premium-hero">
   <div class="hero-copy">
     <div class="eyebrow">ORGANIC CHEMISTRY · XI & XII</div>
     <h1>{{ settings.hero_title }}</h1>
@@ -11,12 +11,28 @@
     </div>
     <div class="trust-row"><span>Concept-first</span><span>Teacher curated</span><span>Live updates</span></div>
   </div>
-  <div class="molecule-card" aria-hidden="true">
-    <div class="mol-title">Reaction thinking</div>
-    <div class="reaction-line"><span>Nu:</span><b>→</b><span>C<sup>δ+</sup></span><b>→</b><span>Product</span></div>
-    <div class="orbital orbital-1"></div><div class="orbital orbital-2"></div><div class="orbital orbital-3"></div>
-    <div class="atom atom-a">C</div><div class="atom atom-b">O</div><div class="atom atom-c">H</div>
-    <p>Follow electrons. Predict outcomes. Remember less.</p>
+  <div class="molecule-card premium-atom-card" aria-hidden="true">
+    <div class="atom-card-grid"></div>
+    <div class="atom-card-glow atom-card-glow-a"></div>
+    <div class="atom-card-glow atom-card-glow-b"></div>
+    <div class="atom-kicker"><span></span> Interactive atomic field</div>
+    <div class="atom-stage">
+      <div class="atom-orbit orbit-one"><i class="electron electron-one"></i></div>
+      <div class="atom-orbit orbit-two"><i class="electron electron-two"></i></div>
+      <div class="atom-orbit orbit-three"><i class="electron electron-three"></i></div>
+      <div class="premium-nucleus">
+        <i class="nucleon proton p1"></i><i class="nucleon neutron n1"></i>
+        <i class="nucleon proton p2"></i><i class="nucleon neutron n2"></i>
+      </div>
+    </div>
+    <div class="atom-copy">
+      <small>MOVE YOUR CURSOR</small>
+      <strong>See chemistry in motion.</strong>
+      <p>Orbitals, electrons and reaction thinking — built into the learning experience.</p>
+    </div>
+    <div class="formula-chip chip-a">C₆H₆</div>
+    <div class="formula-chip chip-b">CH₃COOH</div>
+    <div class="formula-chip chip-c">R–NH₂</div>
   </div>
 </section>
 

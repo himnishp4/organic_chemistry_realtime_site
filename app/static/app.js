@@ -19,55 +19,59 @@
     source.onerror = () => indicator?.classList.remove('connected');
   }
 
-  // Motion chemistry background -------------------------------------------
-  // Pure Canvas: no images, CDN, framework, or paid service required.
+  // Premium interactive atom background -----------------------------------
+  // Pure Canvas: no external images, CDN, paid plugin, or framework needed.
   if (document.body.dataset.chemMotion !== 'true') return;
 
   const canvas = document.createElement('canvas');
-  canvas.className = 'chem-motion-canvas';
+  canvas.className = 'chem-motion-canvas premium-atomic-field';
   canvas.setAttribute('aria-hidden', 'true');
   document.body.prepend(canvas);
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const compact = () => window.innerWidth < 700;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let width = 0;
   let height = 0;
   let dpr = 1;
-  let molecules = [];
-  let frameId = 0;
+  let particles = [];
+  let frame = 0;
   let last = performance.now();
+  let pointerX = 0;
+  let pointerY = 0;
+  let atomX = 0;
+  let atomY = 0;
+  let targetX = 0;
+  let targetY = 0;
+  let dragging = false;
 
-  const formulas = ['C₆H₆', 'R–OH', 'R–NH₂', 'COOH', 'Nu:⁻', 'E⁺', 'CH₃', 'C=O'];
-  const types = ['benzene', 'alcohol', 'carbonyl', 'amine'];
+  const palette = {
+    violet: [112, 93, 255],
+    cyan: [55, 220, 232],
+    blue: [66, 131, 255],
+    pink: [236, 92, 173],
+    white: [255, 255, 255],
+  };
 
+  const compact = () => width < 760;
+  const rgb = (arr, a = 1) => `rgba(${arr[0]},${arr[1]},${arr[2]},${a})`;
   const rand = (min, max) => Math.random() * (max - min) + min;
 
-  function newMolecule(index, count) {
-    const columns = compact() ? 2 : 4;
-    const row = Math.floor(index / columns);
-    const col = index % columns;
-    const colW = width / columns;
-    const rows = Math.ceil(count / columns);
-    const rowH = height / Math.max(rows, 1);
-    return {
-      x: colW * (col + 0.5) + rand(-colW * 0.25, colW * 0.25),
-      y: rowH * (row + 0.5) + rand(-rowH * 0.25, rowH * 0.25),
-      vx: rand(-2.6, 2.6),
-      vy: rand(-2.0, 2.0),
-      rotation: rand(0, Math.PI * 2),
-      vr: rand(-0.025, 0.025),
-      scale: rand(compact() ? 0.62 : 0.72, compact() ? 0.94 : 1.15),
-      type: types[index % types.length],
-      formula: formulas[index % formulas.length],
-      phase: rand(0, Math.PI * 2),
-      alpha: rand(0.45, 0.88),
-    };
+  function makeParticles() {
+    const count = compact() ? 34 : Math.min(85, Math.max(48, Math.round((width * height) / 26000)));
+    particles = Array.from({ length: count }, (_, i) => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: rand(.7, 2.2),
+      vx: rand(-.08, .08),
+      vy: rand(-.06, .06),
+      alpha: rand(.08, .34),
+      color: [palette.violet, palette.cyan, palette.blue][i % 3],
+    }));
   }
 
-  function rebuild() {
+  function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     width = window.innerWidth;
     height = window.innerHeight;
@@ -76,182 +80,254 @@
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = compact() ? 7 : Math.min(16, Math.max(10, Math.round((width * height) / 95000)));
-    molecules = Array.from({ length: count }, (_, i) => newMolecule(i, count));
+
+    atomX = targetX = compact() ? width * .69 : width * .78;
+    atomY = targetY = compact() ? Math.min(height * .34, 270) : height * .38;
+    pointerX = width / 2;
+    pointerY = height / 2;
+    makeParticles();
     draw(performance.now(), 0);
   }
 
-  function bond(x1, y1, x2, y2, doubleBond = false) {
+  function glowDot(x, y, radius, color, alpha = 1) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, radius * 4.4);
+    g.addColorStop(0, rgb(color, .96 * alpha));
+    g.addColorStop(.26, rgb(color, .45 * alpha));
+    g.addColorStop(1, rgb(color, 0));
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-    if (!doubleBond) return;
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const length = Math.hypot(dx, dy) || 1;
-    const ox = (-dy / length) * 4;
-    const oy = (dx / length) * 4;
-    ctx.beginPath();
-    ctx.moveTo(x1 + ox, y1 + oy);
-    ctx.lineTo(x2 + ox, y2 + oy);
-    ctx.stroke();
-  }
-
-  function atom(x, y, label, accent = false) {
-    ctx.beginPath();
-    ctx.arc(x, y, label ? 12 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = accent ? 'rgba(168,119,45,.13)' : 'rgba(13,107,79,.10)';
+    ctx.arc(x, y, radius * 4.4, 0, Math.PI * 2);
     ctx.fill();
-    if (!label) return;
-    ctx.fillStyle = accent ? 'rgba(129,85,20,.40)' : 'rgba(13,91,68,.42)';
-    ctx.font = '700 10px Inter, ui-sans-serif, system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, x, y + 0.5);
+    ctx.fillStyle = rgb(color, alpha);
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  function drawBenzene() {
-    const r = 34;
-    const pts = Array.from({ length: 6 }, (_, i) => {
-      const a = i * Math.PI / 3 - Math.PI / 6;
-      return [Math.cos(a) * r, Math.sin(a) * r];
-    });
-    for (let i = 0; i < 6; i++) {
-      const a = pts[i];
-      const b = pts[(i + 1) % 6];
-      bond(a[0], a[1], b[0], b[1], i % 2 === 0);
-      atom(a[0], a[1], '');
+  function drawAmbientParticles(dt) {
+    ctx.save();
+    for (const p of particles) {
+      if (!reduced && dt) {
+        const s = Math.min(dt, 40) / 16.67;
+        p.x += p.vx * s;
+        p.y += p.vy * s;
+        if (p.x < -10) p.x = width + 10;
+        if (p.x > width + 10) p.x = -10;
+        if (p.y < -10) p.y = height + 10;
+        if (p.y > height + 10) p.y = -10;
+      }
+      glowDot(p.x, p.y, p.r, p.color, p.alpha);
     }
-    ctx.beginPath();
-    ctx.arc(0, 0, 17, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  function drawAlcohol() {
-    const pts = [[-48, 4], [-18, -12], [12, 4], [42, -12]];
-    for (let i = 0; i < pts.length - 1; i++) bond(...pts[i], ...pts[i + 1]);
-    pts.slice(0, 3).forEach(p => atom(...p, ''));
-    atom(42, -12, 'O', true);
-    bond(52, -18, 68, -30);
-    atom(72, -33, 'H');
-  }
-
-  function drawCarbonyl() {
-    atom(-28, 6, '');
-    atom(0, -4, 'C');
-    bond(-19, 2, -9, -2);
-    bond(9, -8, 34, -25, true);
-    atom(42, -30, 'O', true);
-    bond(8, 2, 37, 16);
-    atom(46, 21, '');
-  }
-
-  function drawAmine() {
-    atom(-42, 12, '');
-    atom(-15, -2, '');
-    bond(-34, 8, -24, 3);
-    bond(-5, -5, 20, -18);
-    atom(28, -22, 'N', true);
-    bond(37, -27, 52, -38);
-    bond(37, -17, 55, -8);
-    atom(58, -42, 'H');
-    atom(61, -5, 'H');
-  }
-
-  function drawMolecule(m, now) {
-    const breathe = 1 + Math.sin(now * 0.00065 + m.phase) * 0.035;
-    ctx.save();
-    ctx.translate(m.x, m.y);
-    ctx.rotate(m.rotation);
-    ctx.scale(m.scale * breathe, m.scale * breathe);
-    ctx.globalAlpha = m.alpha;
-    ctx.lineWidth = 1.25;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(13,107,79,.23)';
-
-    if (m.type === 'benzene') drawBenzene();
-    else if (m.type === 'alcohol') drawAlcohol();
-    else if (m.type === 'carbonyl') drawCarbonyl();
-    else drawAmine();
-
-    ctx.rotate(-m.rotation * 0.35);
-    ctx.font = '800 9px Inter, ui-sans-serif, system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(49,68,62,.24)';
-    ctx.textAlign = 'center';
-    ctx.fillText(m.formula, 0, 58);
     ctx.restore();
   }
 
-  function drawReactionArrow(now) {
-    if (compact()) return;
-    const y = height * 0.75 + Math.sin(now * 0.00035) * 12;
-    const x = width * 0.50;
+  function drawMolecularLattice(now) {
+    const step = compact() ? 150 : 190;
     ctx.save();
-    ctx.globalAlpha = 0.14;
-    ctx.strokeStyle = 'rgba(168,119,45,.65)';
-    ctx.fillStyle = 'rgba(168,119,45,.60)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([5, 8]);
+    ctx.globalAlpha = compact() ? .045 : .06;
+    ctx.strokeStyle = rgb(palette.cyan, .8);
+    ctx.lineWidth = .75;
+    const drift = (now * .0025) % step;
+    for (let x = -step + drift; x < width + step; x += step) {
+      for (let y = -step; y < height + step; y += step) {
+        const px = x + Math.sin((y + now * .02) * .008) * 9;
+        const py = y + Math.cos((x + now * .018) * .006) * 8;
+        const r = 24;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = Math.PI / 3 * i + Math.PI / 6;
+          const xx = px + Math.cos(a) * r;
+          const yy = py + Math.sin(a) * r;
+          i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function ellipsePoint(cx, cy, rx, ry, angle, rotation) {
+    const ex = Math.cos(angle) * rx;
+    const ey = Math.sin(angle) * ry;
+    const cr = Math.cos(rotation);
+    const sr = Math.sin(rotation);
+    return [cx + ex * cr - ey * sr, cy + ex * sr + ey * cr];
+  }
+
+  function drawOrbit(cx, cy, rx, ry, rotation, color, alpha) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation);
+    const grad = ctx.createLinearGradient(-rx, 0, rx, 0);
+    grad.addColorStop(0, rgb(color, .04));
+    grad.addColorStop(.5, rgb(color, alpha));
+    grad.addColorStop(1, rgb(color, .04));
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = compact() ? 1 : 1.25;
+    ctx.shadowColor = rgb(color, .26);
+    ctx.shadowBlur = 14;
     ctx.beginPath();
-    ctx.moveTo(x - 70, y);
-    ctx.lineTo(x + 70, y);
+    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  function drawNucleus(cx, cy, size, now) {
+    const pulse = 1 + Math.sin(now * .0015) * .035;
+    const s = size * pulse;
+
+    const halo = ctx.createRadialGradient(cx, cy, s * .2, cx, cy, s * 2.8);
+    halo.addColorStop(0, rgb(palette.violet, .38));
+    halo.addColorStop(.32, rgb(palette.cyan, .14));
+    halo.addColorStop(1, rgb(palette.blue, 0));
+    ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.moveTo(x + 70, y);
-    ctx.lineTo(x + 58, y - 6);
-    ctx.lineTo(x + 58, y + 6);
-    ctx.closePath();
+    ctx.arc(cx, cy, s * 2.8, 0, Math.PI * 2);
     ctx.fill();
-    ctx.font = '600 10px Georgia, serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('mechanism', x, y - 12);
-    ctx.restore();
+
+    const core = ctx.createRadialGradient(cx - s * .3, cy - s * .35, s * .15, cx, cy, s);
+    core.addColorStop(0, 'rgba(255,255,255,.98)');
+    core.addColorStop(.16, rgb(palette.cyan, .95));
+    core.addColorStop(.56, rgb(palette.violet, .94));
+    core.addColorStop(1, 'rgba(20,24,70,.98)');
+    ctx.fillStyle = core;
+    ctx.shadowColor = rgb(palette.violet, .8);
+    ctx.shadowBlur = 28;
+    ctx.beginPath();
+    ctx.arc(cx, cy, s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Proton/neutron highlights inside the nucleus.
+    const beads = [
+      [-.28, -.18, palette.cyan],
+      [.23, -.22, palette.pink],
+      [-.16, .28, palette.violet],
+      [.30, .20, palette.blue],
+    ];
+    for (const [ox, oy, color] of beads) {
+      const bx = cx + ox * s;
+      const by = cy + oy * s;
+      const bg = ctx.createRadialGradient(bx - 2, by - 2, 0, bx, by, s * .26);
+      bg.addColorStop(0, 'rgba(255,255,255,.92)');
+      bg.addColorStop(.28, rgb(color, .92));
+      bg.addColorStop(1, rgb(color, .15));
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.arc(bx, by, s * .24, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawPremiumAtom(now) {
+    const scale = compact() ? .68 : Math.min(1.02, Math.max(.82, width / 1450));
+    const nucleus = 27 * scale;
+    const orbitData = [
+      { rx: 164 * scale, ry: 56 * scale, rot: -.35, speed: .00055, color: palette.cyan, phase: .6 },
+      { rx: 164 * scale, ry: 56 * scale, rot: .72, speed: -.00048, color: palette.violet, phase: 2.5 },
+      { rx: 156 * scale, ry: 52 * scale, rot: 1.57, speed: .00062, color: palette.blue, phase: 4.4 },
+    ];
+
+    // Smooth pointer parallax unless the atom is being dragged.
+    if (!dragging) {
+      const px = (pointerX / Math.max(width, 1) - .5) * (compact() ? 15 : 34);
+      const py = (pointerY / Math.max(height, 1) - .5) * (compact() ? 10 : 22);
+      const homeX = compact() ? width * .69 : width * .78;
+      const homeY = compact() ? Math.min(height * .34, 270) : height * .38;
+      targetX = homeX + px;
+      targetY = homeY + py;
+    }
+    atomX += (targetX - atomX) * .055;
+    atomY += (targetY - atomY) * .055;
+
+    // A subtle glass aura behind the orbital atom.
+    const aura = ctx.createRadialGradient(atomX, atomY, 0, atomX, atomY, 240 * scale);
+    aura.addColorStop(0, 'rgba(94,86,255,.13)');
+    aura.addColorStop(.46, 'rgba(31,203,226,.055)');
+    aura.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(atomX, atomY, 240 * scale, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (const orbit of orbitData) {
+      drawOrbit(atomX, atomY, orbit.rx, orbit.ry, orbit.rot, orbit.color, .31);
+      const a = reduced ? orbit.phase : now * orbit.speed + orbit.phase;
+      const [ex, ey] = ellipsePoint(atomX, atomY, orbit.rx, orbit.ry, a, orbit.rot);
+      glowDot(ex, ey, 5.3 * scale, orbit.color, .94);
+      // tiny opposite electron for a richer premium field
+      const [ex2, ey2] = ellipsePoint(atomX, atomY, orbit.rx, orbit.ry, a + Math.PI, orbit.rot);
+      glowDot(ex2, ey2, 2.4 * scale, palette.white, .32);
+    }
+
+    drawNucleus(atomX, atomY, nucleus, now);
+
+    if (!compact()) {
+      ctx.save();
+      ctx.font = '600 10px Inter, ui-sans-serif, system-ui, sans-serif';
+      ctx.letterSpacing = '0.16em';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(202,216,255,.40)';
+      ctx.fillText('ELECTRON CLOUD', atomX, atomY + 128 * scale);
+      ctx.restore();
+    }
   }
 
   function draw(now, dt) {
     ctx.clearRect(0, 0, width, height);
-    drawReactionArrow(now);
-    molecules.forEach(m => {
-      if (!prefersReducedMotion && dt) {
-        const step = Math.min(dt, 40) / 16.67;
-        m.x += m.vx * step;
-        m.y += m.vy * step;
-        m.rotation += m.vr * 0.12 * step;
-        const margin = 95;
-        if (m.x < -margin) m.x = width + margin;
-        if (m.x > width + margin) m.x = -margin;
-        if (m.y < -margin) m.y = height + margin;
-        if (m.y > height + margin) m.y = -margin;
-      }
-      drawMolecule(m, now);
-    });
+    drawMolecularLattice(now);
+    drawAmbientParticles(dt);
+    drawPremiumAtom(now);
   }
 
   function animate(now) {
     const dt = now - last;
     last = now;
     draw(now, dt);
-    frameId = requestAnimationFrame(animate);
+    frame = requestAnimationFrame(animate);
   }
+
+  window.addEventListener('pointermove', (event) => {
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    if (dragging) {
+      targetX = Math.max(90, Math.min(width - 90, event.clientX));
+      targetY = Math.max(110, Math.min(height - 90, event.clientY));
+    }
+  }, { passive: true });
+
+  window.addEventListener('pointerdown', (event) => {
+    const radius = compact() ? 120 : 190;
+    if (Math.hypot(event.clientX - atomX, event.clientY - atomY) <= radius) {
+      dragging = true;
+      targetX = event.clientX;
+      targetY = event.clientY;
+      document.body.classList.add('atom-dragging');
+    }
+  }, { passive: true });
+
+  window.addEventListener('pointerup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('atom-dragging');
+  }, { passive: true });
 
   let resizeTimer;
   window.addEventListener('resize', () => {
-    window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(rebuild, 160);
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 150);
   }, { passive: true });
 
-  rebuild();
-  if (!prefersReducedMotion) frameId = requestAnimationFrame(animate);
+  resize();
+  if (!reduced) frame = requestAnimationFrame(animate);
 
   document.addEventListener('visibilitychange', () => {
-    if (prefersReducedMotion) return;
-    if (document.hidden) {
-      cancelAnimationFrame(frameId);
-    } else {
+    if (reduced) return;
+    if (document.hidden) cancelAnimationFrame(frame);
+    else {
       last = performance.now();
-      frameId = requestAnimationFrame(animate);
+      frame = requestAnimationFrame(animate);
     }
   });
 })();
