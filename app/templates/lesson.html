@@ -11,7 +11,7 @@
   {% if item.upload_path and item.upload_path.lower().endswith(('.mp4','.webm','.mov')) %}
   <div class="video-shell"><video controls preload="metadata" src="{{ item.upload_path }}"></video></div>
   {% elif item.video_url %}
-  <div class="external-video"><a class="button primary" href="{{ item.video_url }}" target="_blank" rel="noopener">Open teacher video ↗</a><p>Video opens in a new tab.</p></div>
+  <div class="external-video"><a class="button primary liquid" href="{{ item.video_url }}" target="_blank" rel="noopener">Open teacher video ↗</a><p>Video opens in a new tab.</p></div>
   {% endif %}
 
   <div class="lesson-layout">
@@ -19,7 +19,7 @@
     <aside>
       <div class="aside-card"><span class="eyebrow">CHAPTER</span><strong>{{ item.chapter }}</strong></div>
       {% if item.upload_path and not item.upload_path.lower().endswith(('.mp4','.webm','.mov')) %}
-      <div class="aside-card"><span class="eyebrow">RESOURCE</span><a class="button secondary small" href="{{ item.upload_path }}" target="_blank">Open attachment</a></div>
+      <div class="aside-card"><span class="eyebrow">RESOURCE</span><a class="button secondary liquid small" href="{{ item.upload_path }}" target="_blank">Open attachment</a></div>
       {% endif %}
       <div class="aside-card"><span class="eyebrow">UPDATED</span><strong>{{ item.updated_at[:10] }}</strong><small>Teacher-managed content</small></div>
     </aside>

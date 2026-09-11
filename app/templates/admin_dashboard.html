@@ -18,7 +18,7 @@
         <label>Video link (optional)<input name="video_url" type="url" placeholder="https://…"></label>
         <label>Upload file/video (optional)<input name="upload" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.mp4,.webm,.mov,.doc,.docx,.ppt,.pptx"></label>
         <div class="check-row"><label><input type="checkbox" name="published" checked> Publish now</label><label><input type="checkbox" name="featured"> Feature on home</label></div>
-        <button class="button primary full">Publish content</button>
+        <button class="button primary liquid full">Publish content</button>
       </form>
     </div>
 
@@ -30,7 +30,7 @@
         <label>Homepage headline<input name="hero_title" value="{{ settings.hero_title }}" required></label>
         <label>Homepage description<textarea name="hero_subtitle" rows="3" required>{{ settings.hero_subtitle }}</textarea></label>
         <label>Teacher bio<textarea name="teacher_bio" rows="5" required>{{ settings.teacher_bio }}</textarea></label>
-        <button class="button secondary full">Save site details</button>
+        <button class="button secondary liquid full">Save site details</button>
       </form>
     </div>
   </section>
@@ -48,7 +48,7 @@
           <label>Video link<input name="video_url" type="url" value="{{ item.video_url }}"></label><label>Replace upload<input name="upload" type="file"></label>
           {% if item.upload_path %}<small class="muted">Current attachment: {{ item.upload_path }}</small>{% endif %}
           <div class="check-row"><label><input type="checkbox" name="published" {% if item.published %}checked{% endif %}> Published</label><label><input type="checkbox" name="featured" {% if item.featured %}checked{% endif %}> Featured</label></div>
-          <button class="button primary">Save changes</button>
+          <button class="button primary liquid">Save changes</button>
         </form>
         <form action="/admin/content/{{ item.id }}/delete" method="post" onsubmit="return confirm('Delete this content permanently?')" class="delete-form"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Delete content</button></form>
       </details>
