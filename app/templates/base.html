@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Class 11 and Class 12 Organic Chemistry concepts, videos, notes and resources.">
   <title>{% block title %}{{ settings.site_name }}{% endblock %}</title>
+  <script>
+    (() => {
+      try {
+        const saved = localStorage.getItem("oc-theme");
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = saved || systemTheme;
+      } catch (_) {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body data-live-page="true" data-chem-motion="true">
@@ -24,9 +35,15 @@
       <a href="/announcements">Updates</a>
       <a href="/about">Teacher</a>
     </nav>
-    <form class="header-search" action="/search" method="get">
-      <input type="search" name="q" placeholder="Search chemistry…" aria-label="Search chemistry">
-    </form>
+    <div class="header-tools">
+      <form class="header-search" action="/search" method="get">
+        <input type="search" name="q" placeholder="Search chemistry…" aria-label="Search chemistry">
+      </form>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark theme" title="Switch theme">
+        <svg class="theme-icon moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"/></svg>
+        <svg class="theme-icon sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+    </div>
   </header>
 
   <main>{% block content %}{% endblock %}</main>

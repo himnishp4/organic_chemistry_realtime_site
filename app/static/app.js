@@ -1,4 +1,41 @@
 (() => {
+  // Theme switcher ----------------------------------------------------------
+  // Stores the visitor's choice locally so light/dark mode persists across pages.
+  const root = document.documentElement;
+  const themeToggle = document.getElementById('theme-toggle');
+  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function currentTheme() {
+    return root.dataset.theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function updateThemeControl() {
+    if (!themeToggle) return;
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    themeToggle.setAttribute('aria-label', `Switch to ${next} theme`);
+    themeToggle.setAttribute('title', `Switch to ${next} theme`);
+  }
+
+  function applyTheme(theme, persist = true) {
+    root.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+    root.style.colorScheme = root.dataset.theme;
+    if (persist) {
+      try { localStorage.setItem('oc-theme', root.dataset.theme); } catch (_) {}
+    }
+    updateThemeControl();
+  }
+
+  updateThemeControl();
+  themeToggle?.addEventListener('click', () => {
+    applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  });
+
+  systemTheme.addEventListener?.('change', (event) => {
+    let saved = null;
+    try { saved = localStorage.getItem('oc-theme'); } catch (_) {}
+    if (!saved) applyTheme(event.matches ? 'dark' : 'light', false);
+  });
+
   // Live teacher updates ----------------------------------------------------
   const indicator = document.getElementById('live-indicator');
   if (document.body.dataset.livePage && window.EventSource) {
