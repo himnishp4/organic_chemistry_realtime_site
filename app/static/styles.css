@@ -891,3 +891,96 @@ html[data-theme="dark"] .liquid-tabbar__slider::before{
 @media(prefers-reduced-motion:reduce){
   .liquid-tabbar__slider,.site-header nav.liquid-tabbar a{transition:none!important}
 }
+
+/* -------------------------------------------------------------------------
+   Light theme contrast refinement — premium quick-access cards
+   Keeps the emerald/champagne identity while meeting strong readability.
+   ------------------------------------------------------------------------- */
+html:not([data-theme="dark"]) .split-banner .mini-nav a{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  min-height:94px;
+  padding:18px 20px;
+  border:1px solid rgba(16,77,63,.14);
+  border-radius:20px;
+  background:
+    linear-gradient(135deg,rgba(255,255,252,.96),rgba(241,248,244,.94) 62%,rgba(229,244,237,.96)),
+    radial-gradient(circle at 86% 18%,rgba(224,182,107,.12),transparent 36%);
+  box-shadow:
+    0 16px 34px rgba(4,48,39,.10),
+    inset 0 1px 0 rgba(255,255,255,.98),
+    inset 0 -1px 0 rgba(8,77,61,.05);
+  color:#102d26;
+  backdrop-filter:blur(18px) saturate(140%);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,border-color .3s ease,background .3s ease;
+}
+html:not([data-theme="dark"]) .split-banner .mini-nav a::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:linear-gradient(112deg,rgba(255,255,255,.65),transparent 32%,rgba(69,212,189,.08) 72%,rgba(224,182,107,.08));
+}
+html:not([data-theme="dark"]) .split-banner .mini-nav a::after{
+  content:"";
+  position:absolute;
+  width:110px;height:110px;
+  right:-48px;bottom:-58px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(15,118,110,.13),transparent 70%);
+  transition:transform .35s ease,opacity .35s ease;
+}
+html:not([data-theme="dark"]) .split-banner .mini-nav a:hover{
+  transform:translateY(-3px);
+  border-color:rgba(15,118,110,.30);
+  box-shadow:
+    0 22px 44px rgba(4,48,39,.14),
+    0 0 0 1px rgba(15,118,110,.04),
+    inset 0 1px 0 rgba(255,255,255,1);
+}
+html:not([data-theme="dark"]) .split-banner .mini-nav a:hover::after{transform:scale(1.18);opacity:.88}
+html:not([data-theme="dark"]) .split-banner .mini-nav>a>span{
+  width:48px;height:48px;
+  border-radius:15px;
+  flex:0 0 48px;
+  background:linear-gradient(145deg,#0b3e33,#0f6855 65%,#0a493c);
+  color:#f8fffc;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:
+    0 10px 24px rgba(6,69,55,.20),
+    inset 0 1px 0 rgba(255,255,255,.17),
+    inset 0 -1px 0 rgba(0,0,0,.16);
+}
+html:not([data-theme="dark"]) .split-banner .mini-nav strong{
+  color:#102d26;
+  font-size:16px;
+  font-weight:820;
+  letter-spacing:-.025em;
+  text-shadow:none;
+}
+html:not([data-theme="dark"]) .split-banner .mini-nav small{
+  color:#58726a;
+  margin-top:3px;
+  font-size:12px;
+  font-weight:560;
+  line-height:1.35;
+}
+html:not([data-theme="dark"]) .split-banner .mini-nav a:hover strong{color:#075b48}
+html:not([data-theme="dark"]) .split-banner .mini-nav a:hover small{color:#3f6258}
+
+/* Keep the banner copy itself crisp on the deep emerald panel. */
+html:not([data-theme="dark"]) .split-banner>div:first-child h2,
+html:not([data-theme="dark"]) .split-banner>div:first-child .eyebrow{color:#f7fff9}
+html:not([data-theme="dark"]) .split-banner>div:first-child p{color:#c4ddd4}
+
+/* Extra light-theme safeguards for small chips and utility copy that could
+   otherwise inherit pale colors from dark-theme-oriented components. */
+html:not([data-theme="dark"]) .mini-nav strong,
+html:not([data-theme="dark"]) .mini-nav small{opacity:1}
+html:not([data-theme="dark"]) .split-banner .mini-nav a:focus-visible{
+  outline:3px solid rgba(15,118,110,.22);
+  outline-offset:3px;
+}
