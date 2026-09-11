@@ -1,5 +1,12 @@
-# Precision orbital motion patch
+# Dark icon contrast polish
 
-Fixes the homepage atomic model so all three electrons continuously travel on the visible elliptical orbital paths. Adds subtle depth, electron glow tails, cursor parallax, offscreen animation pausing, and a slower (not frozen) reduced-motion mode.
+Fixes chapter-number tiles such as `01` / `02` becoming nearly white in dark mode.
 
-Frontend only: no FastAPI, database, Supabase, authentication, or storage changes.
+Changes:
+- premium dark emerald chapter number badges
+- champagne-gold numbering
+- improved type-icon contrast
+- safe dark treatment for related compact icon tiles
+- no backend, database, storage, or API changes
+
+The patch adds a small stylesheet loaded after the main site CSS so it does not overwrite the rest of the current premium UI work.

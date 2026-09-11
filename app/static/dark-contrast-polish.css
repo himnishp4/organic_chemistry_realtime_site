@@ -1,0 +1,107 @@
+/*
+  Dark-mode contrast polish
+  Loaded after styles.css so it can safely correct theme-specific contrast
+  without replacing the rest of the premium UI system.
+*/
+
+/* Chapter number badge — premium in both themes */
+.chapter-title > span {
+  position: relative;
+  overflow: hidden;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background:
+    linear-gradient(145deg, rgba(15,118,110,.96), rgba(12,69,60,.98));
+  color: #fff8ea;
+  border: 1px solid rgba(255,255,255,.22);
+  box-shadow:
+    0 10px 25px rgba(15,118,110,.16),
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.14);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  isolation: isolate;
+}
+
+.chapter-title > span::before {
+  content: "";
+  position: absolute;
+  inset: -60% 30% 45% -35%;
+  z-index: -1;
+  transform: rotate(24deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* Dark mode: never allow the chapter badge to inherit the near-white --ink */
+html[data-theme="dark"] .chapter-title > span {
+  background:
+    radial-gradient(circle at 27% 20%, rgba(69,212,189,.18), transparent 38%),
+    linear-gradient(145deg, rgba(13,55,47,.98), rgba(5,24,20,.98));
+  color: #e7c47f;
+  border-color: rgba(69,212,189,.25);
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 0 1px rgba(69,212,189,.055),
+    0 0 24px rgba(69,212,189,.08),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  text-shadow: 0 0 18px rgba(224,182,107,.18);
+}
+
+html[data-theme="dark"] .chapter-title > span::after {
+  content: "";
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  background: rgba(69,212,189,.55);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+/* Give lesson/type icons the same dark-mode visual language */
+html[data-theme="dark"] .type-icon {
+  background:
+    linear-gradient(145deg, rgba(19,59,50,.88), rgba(7,27,23,.94));
+  color: #6ee4cf;
+  border: 1px solid rgba(69,212,189,.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 8px 18px rgba(0,0,0,.16);
+}
+
+/* Prevent other compact icon tiles from accidentally becoming white in dark mode */
+html[data-theme="dark"] .mini-nav > a > span,
+html[data-theme="dark"] .teacher-monogram {
+  background:
+    linear-gradient(145deg, #123e34, #071d18);
+  color: #effbf7;
+  border: 1px solid rgba(69,212,189,.15);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+/* Improve chapter header separation and make the badge feel intentional */
+html[data-theme="dark"] .chapter-title {
+  border-color: rgba(102,165,149,.15);
+}
+
+html[data-theme="dark"] .chapter-title h2 {
+  color: #f1f8f5;
+}
+
+html[data-theme="dark"] .chapter-title p {
+  color: #8da69e;
+}
+
+@media (max-width: 640px) {
+  .chapter-title > span {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+  }
+}
