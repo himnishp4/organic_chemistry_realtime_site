@@ -36,6 +36,76 @@
     if (!saved) applyTheme(event.matches ? 'dark' : 'light', false);
   });
 
+  // Liquid-glass sliding navigation ----------------------------------------
+  // The active capsule follows the current route, glides beneath hovered
+  // items, and returns to the active page when the pointer leaves the bar.
+  const liquidNav = document.querySelector('.liquid-tabbar');
+  const navSlider = liquidNav?.querySelector('.liquid-tabbar__slider');
+  const navLinks = liquidNav ? [...liquidNav.querySelectorAll('a[data-nav-route]')] : [];
+
+  function routeMatches(link) {
+    const route = link.dataset.navRoute || link.getAttribute('href') || '';
+    const path = window.location.pathname.replace(/\/$/, '') || '/';
+    const normalized = route.replace(/\/$/, '') || '/';
+    return normalized === '/' ? path === '/' : path === normalized || path.startsWith(`${normalized}/`);
+  }
+
+  let activeNavLink = navLinks.find(routeMatches) || null;
+  if (!activeNavLink && window.location.pathname.startsWith('/lesson/')) {
+    try {
+      const remembered = sessionStorage.getItem('oc-last-nav');
+      activeNavLink = navLinks.find((link) => link.getAttribute('href') === remembered) || null;
+    } catch (_) {}
+  }
+
+  function positionNavSlider(link, instant = false) {
+    if (!liquidNav || !navSlider || !link || window.innerWidth <= 980) return;
+    const navRect = liquidNav.getBoundingClientRect();
+    const linkRect = link.getBoundingClientRect();
+    navSlider.style.setProperty('--slider-x', `${linkRect.left - navRect.left}px`);
+    navSlider.style.setProperty('--slider-y', `${linkRect.top - navRect.top}px`);
+    navSlider.style.setProperty('--slider-w', `${linkRect.width}px`);
+    navSlider.style.setProperty('--slider-h', `${linkRect.height}px`);
+    navSlider.classList.toggle('is-instant', instant);
+    navSlider.classList.add('is-visible');
+    navLinks.forEach((item) => item.classList.toggle('is-active', item === activeNavLink));
+    if (instant) requestAnimationFrame(() => navSlider.classList.remove('is-instant'));
+  }
+
+  if (liquidNav && navSlider && navLinks.length) {
+    const initial = activeNavLink || navLinks[0];
+    requestAnimationFrame(() => positionNavSlider(initial, true));
+
+    navLinks.forEach((link) => {
+      link.addEventListener('pointerenter', () => positionNavSlider(link));
+      link.addEventListener('focus', () => positionNavSlider(link));
+      link.addEventListener('click', () => {
+        try { sessionStorage.setItem('oc-last-nav', link.getAttribute('href') || ''); } catch (_) {}
+      });
+    });
+
+    liquidNav.addEventListener('pointerleave', () => {
+      if (activeNavLink) positionNavSlider(activeNavLink);
+      else navSlider.classList.remove('is-visible');
+    });
+    liquidNav.addEventListener('focusout', (event) => {
+      if (!liquidNav.contains(event.relatedTarget)) {
+        if (activeNavLink) positionNavSlider(activeNavLink);
+        else navSlider.classList.remove('is-visible');
+      }
+    });
+
+    const syncSlider = () => {
+      if (window.innerWidth <= 980) {
+        navSlider.classList.remove('is-visible');
+        return;
+      }
+      positionNavSlider(activeNavLink || navLinks[0], true);
+    };
+    window.addEventListener('resize', syncSlider, { passive: true });
+    if (window.ResizeObserver) new ResizeObserver(syncSlider).observe(liquidNav);
+  }
+
   // Live teacher updates ----------------------------------------------------
   const indicator = document.getElementById('live-indicator');
   if (document.body.dataset.livePage && window.EventSource) {

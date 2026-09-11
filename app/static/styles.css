@@ -708,3 +708,186 @@ html[data-theme="dark"] .section-block:has(.signature-grid)::before{
   .signature-card,.signature-card::after,.signature-card__glow,.chem-glyph,.signature-card__foot b em,.mini-nav a,.mini-nav>a>span{transition:none!important}
   .signature-card:hover,.mini-nav a:hover{transform:none!important}
 }
+
+/* ========================================================================
+   Liquid-glass sliding navigation
+   Inspired by modern translucent mobile tab bars: a single refractive capsule
+   glides under the current/hovered destination instead of six ordinary links.
+   ======================================================================== */
+.site-header nav.liquid-tabbar{
+  --nav-glass-edge:rgba(18,104,86,.16);
+  --nav-glass-fill:rgba(255,255,255,.45);
+  --nav-glass-specular:rgba(255,255,255,.82);
+  --nav-glass-text:#3b5149;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  width:max-content;
+  max-width:100%;
+  margin-inline:auto;
+  padding:5px;
+  border:1px solid rgba(32,91,77,.10);
+  border-radius:19px;
+  color:var(--nav-glass-text);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.52),rgba(255,255,255,.27)),
+    radial-gradient(circle at 20% 0%,rgba(255,255,255,.70),transparent 42%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.80),
+    inset 0 -1px 0 rgba(17,95,77,.045),
+    0 10px 30px rgba(14,67,55,.055);
+  backdrop-filter:blur(22px) saturate(160%);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+  isolation:isolate;
+}
+.site-header nav.liquid-tabbar::before{
+  content:"";
+  position:absolute;
+  inset:1px;
+  z-index:-1;
+  border-radius:17px;
+  pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.22),transparent 34%,rgba(69,212,189,.035) 72%,rgba(255,255,255,.16));
+}
+.site-header nav.liquid-tabbar a{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:38px;
+  padding:0 14px;
+  border-radius:14px;
+  color:inherit;
+  font-size:12px;
+  font-weight:790;
+  letter-spacing:-.01em;
+  white-space:nowrap;
+  transition:color .24s ease,transform .24s cubic-bezier(.2,.8,.2,1),text-shadow .24s ease;
+}
+.site-header nav.liquid-tabbar a:hover,
+.site-header nav.liquid-tabbar a:focus-visible,
+.site-header nav.liquid-tabbar a.is-active{
+  color:#082e27;
+  text-shadow:0 1px 0 rgba(255,255,255,.42);
+}
+.site-header nav.liquid-tabbar a:hover{transform:translateY(-1px)}
+.site-header nav.liquid-tabbar a:focus-visible{outline:none}
+.liquid-tabbar__slider{
+  --slider-x:5px;
+  --slider-y:5px;
+  --slider-w:72px;
+  --slider-h:38px;
+  position:absolute;
+  left:0;
+  top:0;
+  z-index:1;
+  width:var(--slider-w);
+  height:var(--slider-h);
+  border-radius:14px;
+  pointer-events:none;
+  opacity:0;
+  transform:translate3d(var(--slider-x),var(--slider-y),0);
+  border:1px solid rgba(255,255,255,.62);
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.76),rgba(232,250,244,.46) 48%,rgba(95,222,193,.19)),
+    radial-gradient(circle at 24% 12%,rgba(255,255,255,.95),transparent 38%);
+  box-shadow:
+    0 9px 24px rgba(12,85,69,.12),
+    0 2px 5px rgba(9,62,51,.08),
+    inset 0 1.3px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(13,106,84,.09),
+    inset 8px 0 18px rgba(255,255,255,.18);
+  backdrop-filter:blur(18px) saturate(175%);
+  -webkit-backdrop-filter:blur(18px) saturate(175%);
+  transition:
+    transform .48s cubic-bezier(.16,1,.3,1),
+    width .48s cubic-bezier(.16,1,.3,1),
+    height .3s ease,
+    opacity .18s ease,
+    box-shadow .28s ease;
+  will-change:transform,width;
+}
+.liquid-tabbar__slider::before{
+  content:"";
+  position:absolute;
+  left:11%;right:11%;top:2px;height:36%;
+  border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,0));
+  filter:blur(.15px);
+  opacity:.72;
+}
+.liquid-tabbar__slider::after{
+  content:"";
+  position:absolute;
+  width:18px;height:18px;
+  right:8px;bottom:3px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(69,212,189,.24),transparent 68%);
+  filter:blur(3px);
+}
+.liquid-tabbar__slider.is-visible{opacity:1}
+.liquid-tabbar__slider.is-instant{transition:none!important}
+
+html[data-theme="dark"] .site-header nav.liquid-tabbar{
+  --nav-glass-text:#b9d0c8;
+  border-color:rgba(105,196,174,.12);
+  background:
+    linear-gradient(180deg,rgba(18,45,38,.56),rgba(6,22,18,.39)),
+    radial-gradient(circle at 20% 0%,rgba(101,211,187,.09),transparent 44%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    inset 0 -1px 0 rgba(0,0,0,.26),
+    0 12px 34px rgba(0,0,0,.16);
+}
+html[data-theme="dark"] .site-header nav.liquid-tabbar::before{
+  background:linear-gradient(115deg,rgba(255,255,255,.055),transparent 34%,rgba(69,212,189,.045) 72%,rgba(224,182,107,.025));
+}
+html[data-theme="dark"] .site-header nav.liquid-tabbar a:hover,
+html[data-theme="dark"] .site-header nav.liquid-tabbar a:focus-visible,
+html[data-theme="dark"] .site-header nav.liquid-tabbar a.is-active{
+  color:#f0fff9;
+  text-shadow:0 0 18px rgba(69,212,189,.12);
+}
+html[data-theme="dark"] .liquid-tabbar__slider{
+  border-color:rgba(132,229,207,.18);
+  background:
+    linear-gradient(145deg,rgba(37,91,77,.68),rgba(14,57,48,.57) 50%,rgba(8,42,36,.72)),
+    radial-gradient(circle at 20% 6%,rgba(163,244,224,.16),transparent 38%);
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.30),
+    0 0 26px rgba(69,212,189,.055),
+    inset 0 1px 0 rgba(255,255,255,.105),
+    inset 0 -1px 0 rgba(0,0,0,.38),
+    inset 9px 0 19px rgba(111,229,202,.035);
+}
+html[data-theme="dark"] .liquid-tabbar__slider::before{
+  background:linear-gradient(180deg,rgba(211,255,244,.13),rgba(255,255,255,0));
+}
+
+/* Keep the header balanced now that the center navigation has a visual shell. */
+@media(min-width:981px){
+  .site-header{grid-template-columns:minmax(190px,auto) minmax(0,1fr) minmax(242px,auto);gap:20px}
+  .site-header nav.liquid-tabbar{font-size:12px}
+}
+
+/* On phones the same links become a vertical glass sheet. The animated
+   capsule is disabled because the hamburger menu needs large tap targets. */
+@media(max-width:980px){
+  .site-header nav.liquid-tabbar{display:none;width:100%;margin:0;padding:6px;border-radius:17px;gap:2px;background:rgba(255,255,255,.72)}
+  .nav-open .site-header nav.liquid-tabbar{display:grid;grid-column:1/-1}
+  .nav-open .site-header nav.liquid-tabbar a{justify-content:flex-start;min-height:44px;padding:0 13px;border:0;border-radius:12px}
+  .nav-open .site-header nav.liquid-tabbar a.is-active{background:rgba(15,118,110,.09);color:var(--accent)}
+  .liquid-tabbar__slider{display:none!important}
+  html[data-theme="dark"] .site-header nav.liquid-tabbar{background:rgba(7,28,23,.90)}
+  html[data-theme="dark"] .nav-open .site-header nav.liquid-tabbar a.is-active{background:rgba(69,212,189,.09);color:#74e2ca}
+}
+@media(max-width:1160px) and (min-width:981px){
+  .site-header nav.liquid-tabbar a{padding-inline:10px;font-size:11px}
+  .header-search input{width:148px}
+}
+@media(prefers-reduced-motion:reduce){
+  .liquid-tabbar__slider,.site-header nav.liquid-tabbar a{transition:none!important}
+}

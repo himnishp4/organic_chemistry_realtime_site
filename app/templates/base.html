@@ -27,13 +27,14 @@
       <span><strong>{{ settings.site_name }}</strong><small>Class 11 · Class 12</small></span>
     </a>
     <button class="nav-toggle" aria-label="Open menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
-    <nav>
-      <a href="/class/11">Class 11</a>
-      <a href="/class/12">Class 12</a>
-      <a href="/videos">Videos</a>
-      <a href="/resources">Resources</a>
-      <a href="/announcements">Updates</a>
-      <a href="/about">Teacher</a>
+    <nav class="liquid-tabbar" aria-label="Primary navigation">
+      <span class="liquid-tabbar__slider" aria-hidden="true"></span>
+      <a href="/class/11" data-nav-route="/class/11">Class 11</a>
+      <a href="/class/12" data-nav-route="/class/12">Class 12</a>
+      <a href="/videos" data-nav-route="/videos">Videos</a>
+      <a href="/resources" data-nav-route="/resources">Resources</a>
+      <a href="/announcements" data-nav-route="/announcements">Updates</a>
+      <a href="/about" data-nav-route="/about">Teacher</a>
     </nav>
     <div class="header-tools">
       <form class="header-search" action="/search" method="get">
