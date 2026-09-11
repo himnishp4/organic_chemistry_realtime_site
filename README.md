@@ -1,8 +1,9 @@
-# Premium Emerald + Champagne UI Fix
+# Benchmark UI refinement
 
-This patch:
-- fixes the overlapping text inside the animated atom card,
-- replaces the purple palette with deep emerald, teal, and champagne-gold,
-- updates both light and dark modes,
-- recolors the animated canvas atom/electrons to match,
-- changes only frontend CSS/JavaScript (no FastAPI/Supabase changes).
+Fixes dark-theme contrast in the trust chips and Video/Resources actions, and replaces the generic featured-subtopic cards with a bespoke reaction-pathway design system.
+
+Changed files:
+- `app/templates/home.html`
+- `app/static/styles.css`
+
+No backend, database, authentication, Supabase, or storage code is changed.

@@ -55,13 +55,26 @@
 
 <section class="shell section-block">
   <div class="section-head"><div><span class="eyebrow">CURATED PATH</span><h2>Learn what matters next</h2></div><p>Clear explanations organized exactly where students expect them.</p></div>
-  <div class="content-grid">
+  <div class="content-grid signature-grid">
     {% for item in featured %}
-    <a class="content-card" href="/lesson/{{ item.slug }}">
-      <div class="card-meta"><span>Class {{ item.class_level }}</span><span>{{ item.content_type|capitalize }}</span></div>
-      <h3>{{ item.title }}</h3>
-      <p>{{ item.summary }}</p>
-      <div class="card-foot"><span>{{ item.chapter }}</span><b>Open lesson →</b></div>
+    <a class="content-card signature-card" href="/lesson/{{ item.slug }}">
+      <div class="signature-card__glow" aria-hidden="true"></div>
+      <div class="signature-card__top">
+        <div class="card-meta"><span>Class {{ item.class_level }}</span><span>{{ item.content_type|capitalize }}</span></div>
+        <span class="module-index" aria-hidden="true">0{{ loop.index }}</span>
+      </div>
+      <div class="chem-glyph" aria-hidden="true">
+        <span class="bond bond-a"></span><span class="bond bond-b"></span><span class="bond bond-c"></span>
+        <i class="node node-a"></i><i class="node node-b"></i><i class="node node-c"></i><i class="node node-d"></i>
+      </div>
+      <div class="signature-card__body">
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.summary }}</p>
+      </div>
+      <div class="card-foot signature-card__foot">
+        <span class="chapter-label"><i></i>{{ item.chapter }}</span>
+        <b>Enter module <em>↗</em></b>
+      </div>
     </a>
     {% endfor %}
   </div>

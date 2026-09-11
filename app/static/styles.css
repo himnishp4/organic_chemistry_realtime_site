@@ -444,3 +444,267 @@ html[data-theme="dark"] .button.liquid.secondary{background:rgba(255,255,255,.05
   .premium-atom-card .atom-copy{left:20px;right:20px;bottom:18px}
   .premium-atom-card .atom-copy p{max-width:290px;font-size:11px}
 }
+
+/* ========================================================================
+   Benchmark curriculum experience
+   A bespoke "reaction pathway" card system for featured subtopics plus
+   dark-mode contrast corrections for utility actions.
+   ======================================================================== */
+
+/* Dark-mode contrast corrections ---------------------------------------- */
+html[data-theme="dark"] .premium-hero .trust-row span{
+  background:rgba(10,35,29,.78)!important;
+  color:#d5e8e1!important;
+  border:1px solid rgba(91,217,190,.16)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 8px 28px rgba(0,0,0,.16);
+}
+html[data-theme="dark"] .premium-hero .trust-row span::before{color:#57dcc3!important}
+
+/* The old dark palette maps --ink to a light foreground. The mini-nav icon
+   used --ink as its background, producing the white blocks seen in the UI. */
+html[data-theme="dark"] .mini-nav>a>span{
+  background:linear-gradient(145deg,#0a3a31,#0f766e 62%,#a97939)!important;
+  color:#f7fffc!important;
+  border:1px solid rgba(113,229,204,.18);
+  box-shadow:0 12px 32px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.12);
+}
+html[data-theme="dark"] .mini-nav a{
+  background:linear-gradient(135deg,rgba(12,35,30,.90),rgba(8,26,23,.76))!important;
+  border:1px solid rgba(102,198,177,.12);
+  color:#f2fbf8;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 18px 46px rgba(0,0,0,.14);
+}
+html[data-theme="dark"] .mini-nav a:hover{
+  border-color:rgba(81,218,188,.30);
+  background:linear-gradient(135deg,rgba(14,48,40,.96),rgba(9,31,27,.86))!important;
+}
+html[data-theme="dark"] .mini-nav small{color:#a6c2b9!important}
+
+/* Premium utility cards in both modes */
+.mini-nav a{
+  position:relative;overflow:hidden;border:1px solid rgba(15,118,110,.10);
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),border-color .28s ease,box-shadow .28s ease,background .28s ease;
+}
+.mini-nav a::after{
+  content:"";position:absolute;inset:auto -20% -90% 32%;height:160%;pointer-events:none;
+  background:radial-gradient(circle,rgba(75,218,191,.15),transparent 64%);
+  transition:transform .4s ease;
+}
+.mini-nav a:hover{transform:translateY(-3px);box-shadow:0 22px 55px rgba(13,80,68,.12)}
+.mini-nav a:hover::after{transform:translateY(-10%)}
+.mini-nav>a>span{transition:transform .3s cubic-bezier(.2,.8,.2,1),filter .3s ease}
+.mini-nav a:hover>span{transform:rotate(-4deg) scale(1.05);filter:brightness(1.06)}
+
+/* Signature subtopic grid ---------------------------------------------- */
+.signature-grid{
+  gap:22px;
+  perspective:1200px;
+}
+.signature-card{
+  --card-accent:#39d4b8;
+  min-height:342px;
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  padding:28px 28px 24px;
+  border-radius:30px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.84),rgba(250,252,248,.66));
+  border:1px solid rgba(30,106,90,.13);
+  box-shadow:
+    0 24px 70px rgba(20,70,58,.085),
+    inset 0 1px 0 rgba(255,255,255,.92);
+  backdrop-filter:blur(18px) saturate(140%);
+  transform-style:preserve-3d;
+  transition:
+    transform .42s cubic-bezier(.2,.82,.2,1),
+    box-shadow .42s ease,
+    border-color .32s ease,
+    background .32s ease;
+}
+.signature-card:nth-child(2n){--card-accent:#d0a65b}
+.signature-card:nth-child(3n){--card-accent:#3ca9a0}
+.signature-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  background:
+    linear-gradient(90deg,var(--card-accent),transparent 72%) top left/100% 2px no-repeat,
+    radial-gradient(circle at 88% 12%,color-mix(in srgb,var(--card-accent) 15%,transparent),transparent 28%);
+  opacity:.88;
+}
+.signature-card::after{
+  content:"";
+  position:absolute;
+  width:220px;height:220px;
+  right:-108px;bottom:-120px;
+  border:1px solid color-mix(in srgb,var(--card-accent) 24%,transparent);
+  border-radius:50%;
+  box-shadow:
+    0 0 0 28px color-mix(in srgb,var(--card-accent) 5%,transparent),
+    0 0 0 58px color-mix(in srgb,var(--card-accent) 3%,transparent);
+  opacity:.75;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .35s ease;
+  pointer-events:none;
+}
+.signature-card__glow{
+  position:absolute;
+  z-index:-1;
+  width:160px;height:160px;
+  right:-45px;top:-65px;
+  border-radius:50%;
+  background:var(--card-accent);
+  filter:blur(72px);
+  opacity:.055;
+  transition:opacity .35s ease,transform .5s ease;
+}
+.signature-card:hover{
+  transform:translateY(-9px) rotateX(1.4deg);
+  border-color:color-mix(in srgb,var(--card-accent) 46%,transparent);
+  box-shadow:
+    0 34px 90px rgba(11,62,50,.15),
+    0 10px 30px rgba(14,118,101,.08),
+    inset 0 1px 0 rgba(255,255,255,.96);
+}
+.signature-card:hover::after{transform:translate(-18px,-13px) scale(1.08);opacity:1}
+.signature-card:hover .signature-card__glow{opacity:.12;transform:scale(1.25)}
+.signature-card__top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;position:relative;z-index:2}
+.signature-card .card-meta{margin:0;display:flex;flex-wrap:wrap;gap:8px}
+.signature-card .card-meta span{
+  border:1px solid color-mix(in srgb,var(--card-accent) 18%,transparent);
+  background:color-mix(in srgb,var(--card-accent) 8%,white);
+  color:#46635a;
+  padding:6px 10px;
+  letter-spacing:.11em;
+  border-radius:999px;
+}
+.module-index{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:18px;
+  line-height:1;
+  font-style:italic;
+  color:color-mix(in srgb,var(--card-accent) 70%,#617069);
+  opacity:.72;
+}
+.signature-card__body{position:relative;z-index:2;margin-top:48px;max-width:84%}
+.signature-card h3{
+  font-size:clamp(27px,2.1vw,34px);
+  line-height:1.06;
+  letter-spacing:-.035em;
+  margin:0 0 17px;
+}
+.signature-card p{
+  font-size:14px;
+  line-height:1.65;
+  color:#60756e;
+  margin:0;
+}
+.chem-glyph{
+  position:absolute;
+  right:26px;
+  top:83px;
+  width:92px;height:76px;
+  opacity:.52;
+  transform:rotate(-7deg);
+  transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .3s ease;
+}
+.signature-card:hover .chem-glyph{transform:rotate(1deg) translateY(-4px) scale(1.04);opacity:.86}
+.chem-glyph .node{
+  position:absolute;width:8px;height:8px;border-radius:50%;
+  background:var(--card-accent);
+  box-shadow:0 0 0 5px color-mix(in srgb,var(--card-accent) 10%,transparent),0 0 18px color-mix(in srgb,var(--card-accent) 26%,transparent);
+}
+.chem-glyph .node-a{left:4px;top:36px}.chem-glyph .node-b{left:35px;top:9px}.chem-glyph .node-c{right:7px;top:32px}.chem-glyph .node-d{left:40px;bottom:4px}
+.chem-glyph .bond{
+  position:absolute;height:1px;background:color-mix(in srgb,var(--card-accent) 62%,transparent);transform-origin:left center;
+}
+.chem-glyph .bond-a{width:42px;left:10px;top:38px;transform:rotate(-41deg)}
+.chem-glyph .bond-b{width:43px;left:41px;top:15px;transform:rotate(31deg)}
+.chem-glyph .bond-c{width:45px;left:47px;top:52px;transform:rotate(-40deg)}
+.signature-card__foot{
+  position:relative;z-index:2;
+  margin-top:auto;
+  padding-top:18px;
+  border-top:1px solid rgba(65,105,94,.12);
+  align-items:center;
+}
+.chapter-label{display:inline-flex;align-items:center;gap:8px;min-width:0;color:#6b7e77}
+.chapter-label i{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:var(--card-accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--card-accent) 9%,transparent)}
+.signature-card__foot b{
+  display:inline-flex;align-items:center;gap:8px;
+  color:#0f766e;
+  font-size:11px;
+  letter-spacing:.02em;
+  white-space:nowrap;
+}
+.signature-card__foot b em{
+  width:26px;height:26px;display:grid;place-items:center;border-radius:50%;
+  background:#10251f;color:#fff;font-style:normal;font-size:12px;
+  transition:transform .3s ease,background .3s ease;
+}
+.signature-card:hover .signature-card__foot b em{transform:translate(3px,-3px);background:var(--card-accent)}
+
+/* Dark signature cards -------------------------------------------------- */
+html[data-theme="dark"] .signature-card{
+  background:
+    linear-gradient(145deg,rgba(8,24,20,.88),rgba(7,18,16,.78));
+  border-color:rgba(111,190,171,.13);
+  box-shadow:0 26px 80px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.035);
+}
+html[data-theme="dark"] .signature-card::before{
+  background:
+    linear-gradient(90deg,var(--card-accent),transparent 72%) top left/100% 2px no-repeat,
+    radial-gradient(circle at 88% 12%,color-mix(in srgb,var(--card-accent) 12%,transparent),transparent 30%);
+}
+html[data-theme="dark"] .signature-card:hover{
+  border-color:color-mix(in srgb,var(--card-accent) 44%,transparent);
+  box-shadow:0 35px 90px rgba(0,0,0,.35),0 12px 34px rgba(6,88,73,.12),inset 0 1px 0 rgba(255,255,255,.055);
+}
+html[data-theme="dark"] .signature-card .card-meta span{
+  background:color-mix(in srgb,var(--card-accent) 10%,#081713)!important;
+  border-color:color-mix(in srgb,var(--card-accent) 22%,transparent)!important;
+  color:#c5ddd5!important;
+}
+html[data-theme="dark"] .signature-card h3{color:#f4faf7}
+html[data-theme="dark"] .signature-card p{color:#a8beb7!important}
+html[data-theme="dark"] .module-index{color:color-mix(in srgb,var(--card-accent) 72%,#96aaa3)}
+html[data-theme="dark"] .signature-card__foot{border-color:rgba(112,178,160,.12)}
+html[data-theme="dark"] .chapter-label{color:#839a92}
+html[data-theme="dark"] .signature-card__foot b{color:#64dec7}
+html[data-theme="dark"] .signature-card__foot b em{background:#133b32;color:#eafff8;border:1px solid rgba(94,218,189,.18)}
+
+/* A subtle section-stage makes the curriculum feel intentionally designed
+   rather than like a generic card grid. */
+.section-block:has(.signature-grid){position:relative;padding-block:12px 24px}
+.section-block:has(.signature-grid)::before{
+  content:"";position:absolute;z-index:-1;left:-6%;right:-6%;top:72px;bottom:-30px;border-radius:48px;
+  background:
+    radial-gradient(circle at 12% 20%,rgba(15,118,110,.055),transparent 28%),
+    radial-gradient(circle at 88% 72%,rgba(199,154,80,.045),transparent 27%);
+  border:1px solid rgba(50,101,88,.045);
+}
+html[data-theme="dark"] .section-block:has(.signature-grid)::before{
+  background:
+    radial-gradient(circle at 12% 20%,rgba(48,197,166,.045),transparent 28%),
+    radial-gradient(circle at 88% 72%,rgba(199,154,80,.035),transparent 27%);
+  border-color:rgba(91,165,147,.045);
+}
+
+@media(max-width:980px){
+  .signature-card{min-height:320px}
+  .signature-card__body{max-width:88%;margin-top:42px}
+}
+@media(max-width:720px){
+  .signature-grid{gap:14px}
+  .signature-card{min-height:300px;padding:23px;border-radius:24px}
+  .signature-card__body{max-width:100%;margin-top:32px;padding-right:34px}
+  .signature-card h3{font-size:27px}
+  .chem-glyph{right:14px;top:82px;transform:scale(.82) rotate(-7deg);opacity:.36}
+  .signature-card:hover{transform:translateY(-5px)}
+  .section-block:has(.signature-grid)::before{left:-12px;right:-12px;border-radius:30px}
+}
+@media(prefers-reduced-motion:reduce){
+  .signature-card,.signature-card::after,.signature-card__glow,.chem-glyph,.signature-card__foot b em,.mini-nav a,.mini-nav>a>span{transition:none!important}
+  .signature-card:hover,.mini-nav a:hover{transform:none!important}
+}
