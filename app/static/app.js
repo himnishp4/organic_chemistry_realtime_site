@@ -126,6 +126,77 @@
     source.onerror = () => indicator?.classList.remove('connected');
   }
 
+  // Hero atomic model --------------------------------------------------------
+  // Drive the visible electrons with requestAnimationFrame so they travel on
+  // the *actual elliptical orbital paths* instead of a circular CSS transform.
+  // This also keeps the atom gently interactive with cursor / touch movement.
+  const heroAtom = document.querySelector('.premium-atom-card');
+  const heroAtomStage = heroAtom?.querySelector('.atom-stage');
+
+  if (heroAtom && heroAtomStage) {
+    const orbitSpecs = [
+      { orbit: heroAtomStage.querySelector('.orbit-one'), electron: heroAtomStage.querySelector('.electron-one'), speed: 0.00115, phase: 0.25 },
+      { orbit: heroAtomStage.querySelector('.orbit-two'), electron: heroAtomStage.querySelector('.electron-two'), speed: 0.00092, phase: 2.35 },
+      { orbit: heroAtomStage.querySelector('.orbit-three'), electron: heroAtomStage.querySelector('.electron-three'), speed: 0.00132, phase: 4.35 },
+    ].filter((item) => item.orbit && item.electron);
+
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let heroAtomFrame = 0;
+    let heroVisible = true;
+
+    function renderHeroElectrons(now) {
+      const motionScale = motionPreference.matches ? 0.28 : 1;
+      orbitSpecs.forEach((item, index) => {
+        const rect = item.orbit.getBoundingClientRect();
+        const electronSize = item.electron.offsetWidth || 12;
+        const rx = Math.max(1, (rect.width - electronSize) / 2);
+        const ry = Math.max(1, (rect.height - electronSize) / 2);
+        const angle = now * item.speed * motionScale + item.phase;
+        const x = Math.cos(angle) * rx;
+        const y = Math.sin(angle) * ry;
+        const depth = (Math.sin(angle) + 1) / 2;
+        const scale = 0.82 + depth * 0.34;
+
+        item.electron.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+        item.electron.style.opacity = `${0.72 + depth * 0.28}`;
+        item.electron.style.zIndex = depth > 0.5 ? '4' : '1';
+        item.electron.style.setProperty('--electron-tail-opacity', `${0.18 + depth * 0.28}`);
+        item.orbit.style.setProperty('--orbit-energy', `${0.18 + depth * 0.14}`);
+        item.orbit.dataset.orbitIndex = String(index + 1);
+      });
+
+      if (heroVisible) heroAtomFrame = requestAnimationFrame(renderHeroElectrons);
+    }
+
+    // Premium cursor parallax: the nucleus/orbit system follows the pointer by
+    // only a few pixels, so it feels physical without becoming distracting.
+    heroAtom.addEventListener('pointermove', (event) => {
+      const rect = heroAtom.getBoundingClientRect();
+      const nx = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5);
+      const ny = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5);
+      heroAtomStage.style.setProperty('--atom-parallax-x', `${nx * 12}px`);
+      heroAtomStage.style.setProperty('--atom-parallax-y', `${ny * 9}px`);
+    }, { passive: true });
+
+    heroAtom.addEventListener('pointerleave', () => {
+      heroAtomStage.style.setProperty('--atom-parallax-x', '0px');
+      heroAtomStage.style.setProperty('--atom-parallax-y', '0px');
+    }, { passive: true });
+
+    // Pause work when the card is not onscreen.
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((entries) => {
+        const visible = entries[0]?.isIntersecting ?? true;
+        if (visible === heroVisible) return;
+        heroVisible = visible;
+        cancelAnimationFrame(heroAtomFrame);
+        if (heroVisible) heroAtomFrame = requestAnimationFrame(renderHeroElectrons);
+      }, { threshold: 0.05 }).observe(heroAtom);
+    }
+
+    heroAtomFrame = requestAnimationFrame(renderHeroElectrons);
+  }
+
   // Premium interactive atom background -----------------------------------
   // Pure Canvas: no external images, CDN, paid plugin, or framework needed.
   if (document.body.dataset.chemMotion !== 'true') return;

@@ -1,6 +1,5 @@
-# Premium light-mode contrast fix
+# Precision orbital motion patch
 
-This patch improves the light-theme quick-access cards (Video library / Notes & resources) so text and icons remain clearly readable while preserving the premium emerald visual system.
+Fixes the homepage atomic model so all three electrons continuously travel on the visible elliptical orbital paths. Adds subtle depth, electron glow tails, cursor parallax, offscreen animation pausing, and a slower (not frozen) reduced-motion mode.
 
-Files changed:
-- `app/static/styles.css`
+Frontend only: no FastAPI, database, Supabase, authentication, or storage changes.
