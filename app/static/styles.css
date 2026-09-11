@@ -337,3 +337,110 @@ html[data-theme="dark"] .chem-motion-canvas.premium-atomic-field{opacity:.95}
 }
 @media(max-width:640px){.header-tools{right:58px;top:13px}.theme-toggle{width:38px;height:38px;flex-basis:38px}}
 @media(prefers-reduced-motion:reduce){.theme-toggle{transition:none}.theme-toggle:hover{transform:none}}
+
+/* Premium emerald + champagne refinement ---------------------------------
+   Removes the purple cast and fixes the atom-card text overlap caused by the
+   legacy .molecule-card p absolute-position rule. */
+:root{
+  --ink:#10251f;
+  --ink-2:#52675f;
+  --paper:#f4f2eb;
+  --white:#fff;
+  --line:#d7ded8;
+  --accent:#0f766e;
+  --accent-2:#dcefe9;
+  --gold:#c79a50;
+  --shadow:0 24px 70px rgba(18,65,55,.12);
+}
+body{
+  background:
+    radial-gradient(circle at 76% 9%,rgba(15,118,110,.10),transparent 31%),
+    radial-gradient(circle at 11% 42%,rgba(199,154,80,.085),transparent 32%),
+    linear-gradient(180deg,#f8f7f2 0%,#f0f4f0 52%,#faf8f3 100%);
+}
+.ambient-a{background:#b9e4d8;opacity:.30}
+.ambient-b{background:#ead8b6;opacity:.27}
+.site-header{border-color:rgba(35,92,78,.14);background:rgba(251,252,248,.78);box-shadow:0 14px 45px rgba(24,62,52,.075)}
+.brand-mark{background:linear-gradient(145deg,#0b2d28,#0f766e 62%,#c89a50);box-shadow:0 8px 24px rgba(15,118,110,.22),inset 0 1px 0 rgba(255,255,255,.30)}
+.eyebrow{color:#0f766e}
+.premium-hero .hero-copy>p{color:#536960}
+.premium-hero .trust-row span{background:rgba(255,255,255,.62);border-color:rgba(15,118,110,.13)}
+
+.premium-atom-card{
+  background:
+    radial-gradient(circle at 60% 44%,rgba(20,184,166,.16),transparent 31%),
+    radial-gradient(circle at 22% 80%,rgba(218,174,92,.13),transparent 35%),
+    linear-gradient(145deg,rgba(5,25,22,.985),rgba(9,38,33,.97) 54%,rgba(10,45,39,.985));
+  border-color:rgba(146,220,202,.13);
+  box-shadow:0 42px 90px rgba(4,34,28,.28),inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 60px rgba(20,184,166,.04);
+}
+.atom-card-grid{background-image:linear-gradient(rgba(111,207,185,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(111,207,185,.14) 1px,transparent 1px)}
+.atom-card-glow-a{background:rgba(20,184,166,.22)}
+.atom-card-glow-b{background:rgba(218,174,92,.17)}
+.atom-kicker{color:#9ed2c5}.atom-kicker span{background:#49d6c2;box-shadow:0 0 0 5px rgba(73,214,194,.08),0 0 16px rgba(73,214,194,.78)}
+.atom-orbit{border-color:rgba(121,214,193,.30);box-shadow:0 0 30px rgba(20,184,166,.055),inset 0 0 20px rgba(218,174,92,.025)}
+.electron-one{color:#4ddac7}.electron-two{color:#d9ab5c}.electron-three{color:#3aa995}
+.premium-nucleus{
+  background:radial-gradient(circle at 28% 24%,#fff 0 4%,#72ead7 11%,#17a98f 36%,#b98842 70%,#163b33 100%);
+  box-shadow:0 0 0 9px rgba(20,184,166,.05),0 0 35px rgba(20,184,166,.58),0 0 78px rgba(218,174,92,.16),inset -12px -14px 24px rgba(3,20,17,.44),inset 8px 8px 16px rgba(255,255,255,.19);
+}
+.proton{background:linear-gradient(145deg,#f4d18d,#b6792f)}
+.neutron{background:linear-gradient(145deg,#78ead7,#168a79)}
+.formula-chip{border-color:rgba(255,255,255,.11);background:rgba(255,255,255,.055);color:#b7d8d0}
+.atom-copy small{color:#79ad9f}
+.atom-copy strong{color:#f6fbf8}
+
+/* Critical overlap fix: the legacy .molecule-card p selector sets every
+   paragraph to position:absolute. Inside the atom copy that caused the body
+   sentence to sit on top of the kicker/title. */
+.premium-atom-card .atom-copy{
+  left:28px;right:28px;bottom:24px;z-index:4;
+  display:flex;flex-direction:column;align-items:flex-start;
+}
+.premium-atom-card .atom-copy small,
+.premium-atom-card .atom-copy strong,
+.premium-atom-card .atom-copy p{position:static!important;inset:auto!important;transform:none!important;width:auto;height:auto}
+.premium-atom-card .atom-copy small{margin:0 0 5px}
+.premium-atom-card .atom-copy strong{margin:0;line-height:1.08}
+.premium-atom-card .atom-copy p{margin:8px 0 0!important;color:#a9c4bc!important;max-width:390px;line-height:1.45;font-size:12px}
+
+.split-banner{background:linear-gradient(140deg,#092c27,#0d3e36 56%,#144d40);color:#f4fbf8;border-color:rgba(255,255,255,.08)}
+.split-banner p,.split-banner small{color:#afd0c6}.split-banner .eyebrow{color:#e2bd78}
+.button.liquid.primary{background:linear-gradient(135deg,rgba(8,91,81,.96),rgba(15,118,110,.93) 54%,rgba(184,133,62,.88));box-shadow:0 14px 34px rgba(15,118,110,.23),inset 0 1px 0 rgba(255,255,255,.25)}
+.button.liquid.secondary{background:rgba(255,255,255,.70);border-color:rgba(67,115,102,.20);box-shadow:0 12px 30px rgba(27,72,61,.075),inset 0 1px 0 rgba(255,255,255,.82)}
+.theme-toggle:hover{border-color:rgba(15,118,110,.30);box-shadow:0 13px 30px rgba(15,118,110,.13),inset 0 1px 0 rgba(255,255,255,.9)}
+.theme-toggle:focus-visible{outline-color:rgba(15,118,110,.20)}
+
+html[data-theme="dark"]{
+  --ink:#eff9f5;
+  --ink-2:#abc2ba;
+  --paper:#050d0b;
+  --white:#0c1916;
+  --line:#203a33;
+  --accent:#45d4bd;
+  --accent-2:#102a24;
+  --gold:#e0b66b;
+  --shadow:0 24px 72px rgba(0,0,0,.35);
+}
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(circle at 76% 9%,rgba(20,184,166,.14),transparent 31%),
+    radial-gradient(circle at 11% 42%,rgba(218,174,92,.095),transparent 33%),
+    linear-gradient(180deg,#050d0b 0%,#071510 48%,#060f0c 100%);
+}
+html[data-theme="dark"] .ambient-a{background:#0b6f62;opacity:.20}
+html[data-theme="dark"] .ambient-b{background:#8b642e;opacity:.14}
+html[data-theme="dark"] .site-header{background:rgba(6,18,15,.76);border-color:rgba(127,191,174,.13)}
+html[data-theme="dark"] .theme-toggle:hover{background:rgba(69,212,189,.10);border-color:rgba(69,212,189,.28)}
+html[data-theme="dark"] .content-card:hover{border-color:rgba(69,212,189,.30)}
+html[data-theme="dark"] .live-indicator.updated{background:#0f766e;color:#fff}
+html[data-theme="dark"] .card-meta span,
+html[data-theme="dark"] .lesson-type,
+html[data-theme="dark"] .type-icon{background:#10251f;color:#b4d0c7}
+html[data-theme="dark"] .button.secondary,
+html[data-theme="dark"] .button.liquid.secondary{background:rgba(255,255,255,.055);border-color:rgba(121,181,164,.16);color:#eff9f5}
+
+@media(max-width:640px){
+  .premium-atom-card .atom-copy{left:20px;right:20px;bottom:18px}
+  .premium-atom-card .atom-copy p{max-width:290px;font-size:11px}
+}

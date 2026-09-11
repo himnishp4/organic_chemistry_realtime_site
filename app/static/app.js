@@ -84,10 +84,10 @@
   let dragging = false;
 
   const palette = {
-    violet: [112, 93, 255],
-    cyan: [55, 220, 232],
-    blue: [66, 131, 255],
-    pink: [236, 92, 173],
+    violet: [22, 163, 139],
+    cyan: [72, 214, 196],
+    blue: [24, 112, 101],
+    pink: [218, 174, 92],
     white: [255, 255, 255],
   };
 
@@ -280,8 +280,8 @@
 
     // A subtle glass aura behind the orbital atom.
     const aura = ctx.createRadialGradient(atomX, atomY, 0, atomX, atomY, 240 * scale);
-    aura.addColorStop(0, 'rgba(94,86,255,.13)');
-    aura.addColorStop(.46, 'rgba(31,203,226,.055)');
+    aura.addColorStop(0, 'rgba(16,185,129,.14)');
+    aura.addColorStop(.46, 'rgba(218,174,92,.055)');
     aura.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = aura;
     ctx.beginPath();

@@ -1,10 +1,8 @@
-# Premium Light/Dark Theme Patch
+# Premium Emerald + Champagne UI Fix
 
-Adds a persistent light/dark theme toggle to the Organic Chemistry site without changing FastAPI routes, database code, or Supabase configuration.
-
-Files changed:
-- `app/templates/base.html`
-- `app/static/styles.css`
-- `app/static/app.js`
-
-The visitor's preference is stored in browser localStorage under `oc-theme` and applies across pages.
+This patch:
+- fixes the overlapping text inside the animated atom card,
+- replaces the purple palette with deep emerald, teal, and champagne-gold,
+- updates both light and dark modes,
+- recolors the animated canvas atom/electrons to match,
+- changes only frontend CSS/JavaScript (no FastAPI/Supabase changes).
